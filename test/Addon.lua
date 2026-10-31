@@ -1,14 +1,30 @@
 -- Loading the addon in tests: the files in TOC order (like the game), each with ("Fabrikao", ns).
--- LoadAddon() loads everything; LoadAddon({ files = {...} }) only those files (with Localization/Locale.lua
--- in front if missing). StartAddon(ns) simulates entering the game.
+-- LoadAddon() loads everything (LoadAddon({ toc = "Fabrikao_Vanilla.toc" }) for another client's toc);
+-- LoadAddon({ files = {...} }) only those files (with the core ones in front: Flavor, Compat and Locale). StartAddon(ns) simulates entering the game.
 
-function TocFiles()
+-- The .xml files of the toc (Load_*.xml: <Script file> and <Include file>, paths relative to the xml) are
+-- expanded in place, like the game does.
+local function addFiles(path, files)
+    path = path:gsub("\\", "/")
+    if not path:match("%.xml$") then
+        files[#files + 1] = path
+        return
+    end
+    local dir = path:match("^(.*/)[^/]*$") or ""
+    local handle = assert(io.open(path))
+    local xml = handle:read("*a"):gsub("<!%-%-.-%-%->", "")
+    handle:close()
+    for tag, ref in xml:gmatch('<(%a+)%s+file="([^"]+)"') do
+        if tag == "Script" or tag == "Include" then addFiles(dir .. ref, files) end
+    end
+end
+
+-- The Lua files the toc loads, in order. `toc` picks another toc (default Fabrikao.toc).
+function TocFiles(toc)
     local files = {}
-    for line in io.lines("Fabrikao.toc") do
-        line = line:gsub("\r", ""):gsub("%s+$", "")
-        if line ~= "" and not line:match("^##") and line:match("%.lua$") then
-            files[#files + 1] = (line:gsub("\\", "/"))
-        end
+    for line in io.lines(toc or "Fabrikao.toc") do
+        line = line:gsub("%s+$", "") -- also drops the CR of CRLF files
+        if line ~= "" and not line:match("^##") then addFiles(line, files) end
     end
     return files
 end
@@ -18,13 +34,14 @@ function LoadAddon(opts)
     local ns = {}
     local files = opts.files
     if files then
-        if files[1] ~= "Localization/Locale.lua" then
-            local withLocale = { "Localization/Locale.lua" }
-            for _, f in ipairs(files) do withLocale[#withLocale + 1] = f end
-            files = withLocale
+        -- (the files every module counts on: which client this is, the compat queries and the text)
+        local withCore = { "Modules/Core/Flavor.lua", "Modules/Core/Compat.lua", "Localization/Locale.lua" }
+        for _, f in ipairs(files) do
+            if f ~= withCore[1] and f ~= withCore[2] and f ~= withCore[3] then withCore[#withCore + 1] = f end
         end
+        files = withCore
     else
-        files = TocFiles()
+        files = TocFiles(opts.toc)
     end
     for _, f in ipairs(files) do
         local chunk = assert(loadfile(f))

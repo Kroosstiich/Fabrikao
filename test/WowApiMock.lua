@@ -148,6 +148,9 @@ function frameMethods:GetNormalTexture() self._normal = self._normal or WowMock.
 function frameMethods:GetHighlightTexture() self._highlight = self._highlight or WowMock.NewFrame("Texture", nil, self); return self._highlight end
 function frameMethods:GetThumbTexture() self._thumb = self._thumb or WowMock.NewFrame("Texture", nil, self); return self._thumb end
 function frameMethods:Click(...) fire(self, "OnClick", ...) end
+-- secure buttons keep their attributes by name
+function frameMethods:SetAttribute(k, v) self._attrs = self._attrs or {}; self._attrs[k] = v end
+function frameMethods:GetAttribute(k) return self._attrs and self._attrs[k] end
 function frameMethods:GetObjectType() return self._kind end
 
 local function methodFor(self, k)

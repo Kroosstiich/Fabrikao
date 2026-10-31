@@ -20,6 +20,7 @@ end
 
 -- is that profession's window the one open and ready? (by skill line, or by name should the game number its lines differently)
 local function isReady(skillLine, name)
+    if ns.IsClassic() then return false end -- (the lists come from the data there; Classic.lua reads the windows for what is known)
     if not (C_TradeSkillUI and C_TradeSkillUI.IsTradeSkillReady and C_TradeSkillUI.IsTradeSkillReady()) then return false end
     if openSkillLine() == skillLine then return true end
     local info = C_TradeSkillUI.GetBaseProfessionInfo and C_TradeSkillUI.GetBaseProfessionInfo()

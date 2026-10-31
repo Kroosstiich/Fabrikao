@@ -10,7 +10,7 @@ local function bankPlayer()
 end
 
 local function viaIsSpellKnown(id)
-    if not (C_SpellBook and C_SpellBook.IsSpellKnown) then return false end
+    if not (C_SpellBook and C_SpellBook.IsSpellKnown) then return IsSpellKnown ~= nil and IsSpellKnown(id) and true or false end
     local ok, result = pcall(C_SpellBook.IsSpellKnown, id, bankPlayer())
     return ok and result and true or false
 end
@@ -39,6 +39,28 @@ function ns.Probe()
         recipesInData = 0, professions = {},
     }
     for _ in ns.RecipeDB_Each() do probe.recipesInData = probe.recipesInData + 1 end
+
+    if ns.IsClassic() then
+        -- the old API: what the client has, the skill lines as the game lists them and what the windows gave
+        local lines, unnamed, rows = ns.Classic_SkillLines()
+        probe.classic = {
+            flavor = ns.flavor, unnamedPrimary = unnamed, skillRows = rows, lines = {},
+            api = {
+                GetNumSkillLines = GetNumSkillLines ~= nil, GetNumTradeSkills = GetNumTradeSkills ~= nil, GetNumCrafts = GetNumCrafts ~= nil,
+                GetTradeSkillRecipeLink = GetTradeSkillRecipeLink ~= nil, GetCraftItemLink = GetCraftItemLink ~= nil,
+                IsSpellKnown = IsSpellKnown ~= nil, ExpandTradeSkillSubClass = ExpandTradeSkillSubClass ~= nil,
+                C_TradeSkillUI = C_TradeSkillUI ~= nil, C_SpellBook = C_SpellBook ~= nil, GetProfessions = GetProfessions ~= nil,
+            },
+            tradeWindow = TradeSkillFrame ~= nil and TradeSkillFrame:IsShown() or false,
+            craftWindow = CraftFrame ~= nil and CraftFrame:IsShown() or false,
+            aliases = ns.db and ns.db.skillAliases or {},
+        }
+        for _, line in ipairs(lines) do
+            probe.classic.lines[#probe.classic.lines + 1] = ("%s (%d): %d/%d"):format(line.name, line.skillLine, line.rank, line.maxRank)
+        end
+        ns.Print(("%s: %d skill rows, %d professions named, %d primary not named; trade window %s, craft window %s"):format(
+            ns.flavor, rows, #lines, unnamed, probe.classic.tradeWindow and "open" or "closed", probe.classic.craftWindow and "open" or "closed"))
+    end
 
     local open = C_TradeSkillUI and C_TradeSkillUI.GetBaseProfessionInfo and C_TradeSkillUI.GetBaseProfessionInfo()
     probe.openWindow = open and { id = open.professionID, name = open.professionName, parent = open.parentProfessionID } or false
@@ -75,10 +97,19 @@ function ns.Probe()
                 end
             end
         end
+        if ns.IsClassic() then
+            -- what the profession windows gave (the recipes saved as known) against what the client says by itself
+            entry.saved = 0
+            for id in pairs(FabrikaoCharDB and FabrikaoCharDB.knownRecipes or {}) do
+                local recipe = ns.RecipeDB_Get(id)
+                if recipe and recipe.s == profession.skillLine then entry.saved = entry.saved + 1 end
+            end
+        end
         probe.professions[#probe.professions + 1] = entry
         ns.Print(("%s: %d in the data; known by IsSpellKnown %d, InSpellBook %d, IsPlayerSpell %d%s"):format(
             entry.name, entry.total, entry.isSpellKnown, entry.inSpellBook, entry.isPlayerSpell,
-            entry.live and (("; the window lists %d known"):format(entry.live.known)) or ""))
+            (entry.saved and (("; saved from the windows %d"):format(entry.saved)) or "")
+            .. (entry.live and (("; the window lists %d known"):format(entry.live.known)) or "")))
     end
     FabrikaoDB.probe = probe
     ns.Print(ns.L["Probe finished. Type /reload to save it."])

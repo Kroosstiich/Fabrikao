@@ -132,6 +132,8 @@ function ns.RecipeDB_ShowProductTooltip(owner, spellID, recipe)
     if product and GameTooltip.SetItemByID then
         GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(product)
+        GameTooltip:Show()
+        ns.Compare_Show(GameTooltip) -- (Classic clients: what you wear in that slot, beside it)
     elseif GameTooltip.SetSpellByID then
         GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
         GameTooltip:SetSpellByID(spellID)

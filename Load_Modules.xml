@@ -1,6 +1,7 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
     <!-- Shared by every client: loaded once the recipe data is in. What differs between the clients (the professions API)
          is picked at run time by ns.IsClassic(), not by what is loaded. -->
+    <Script file="Modules\Tooltip\Compare.lua"/>
     <Script file="Modules\Data\RecipeDB.lua"/>
     <Script file="Modules\Data\Seasonal.lua"/>
     <Script file="Modules\Data\Prices.lua"/>

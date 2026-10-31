@@ -28,7 +28,7 @@ read_globals = {
     "GetNumTradeSkills", "GetTradeSkillInfo", "GetTradeSkillRecipeLink", "GetTradeSkillItemLink", "GetTradeSkillLine", "ExpandTradeSkillSubClass",
     "CollapseTradeSkillSubClass", "GetNumCrafts", "GetCraftInfo", "GetCraftItemLink", "GetCraftRecipeLink", "GetCraftDisplaySkillLine",
     "ExpandCraftSkillLine", "CollapseCraftSkillLine", "ExpandSkillHeader", "CollapseSkillHeader", "IsSpellKnown", "GetItemIcon", "GetItemInfoInstant",
-    "GetTime", "GetCVarBool", "IsAddOnLoaded", "TradeSkillFrame", "CraftFrame", "TradeSkillFrame_SetSelection", "TradeSkillFrame_Update", "CraftFrame_SetSelection", "CraftFrame_Update",
+    "GetTime", "GameTooltip_ShowCompareItem", "IsEquippableItem", "ShoppingTooltip1", "ShoppingTooltip2", "GetCVarBool", "IsAddOnLoaded", "TradeSkillFrame", "CraftFrame", "TradeSkillFrame_SetSelection", "TradeSkillFrame_Update", "CraftFrame_SetSelection", "CraftFrame_Update",
     "WOW_PROJECT_ID", "strtrim", "tinsert", "OpenWorldMap", "WorldMapFrame", "CreateVector2D", "InCombatLockdown", "CLOSE", "GameFontHighlightSmall", "ShowUIPanel", "C_Texture", "MenuUtil",
 }
 

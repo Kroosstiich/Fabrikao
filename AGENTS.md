@@ -72,6 +72,7 @@ Addon files at the repo root, packaged as the folder `Fabrikao` (`.pkgmeta`):
   and the trainers; `Data/Data.test.lua` checks its shape. `Modules/Data/RecipeDB.lua` queries it (by spell id, search by name /
   ingredient / NPC / zone, "where to learn it" lines)
 - `Modules/Professions/Classic.lua` — everything the Classic clients do differently, see below
+- `Modules/Tooltip/Compare.lua` — `ns.Compare_Show(GameTooltip)`: on the Classic clients (Retail and Forever do it themselves) the tooltip of what a recipe makes gets the comparison tooltips of what is worn (`GameTooltip_ShowCompareItem`, titled "Equipped"), called from `ns.RecipeDB_ShowProductTooltip`; the same as Embolsao's
 - `Modules/Debug/Probe.lua` — `/fab probe` prints, per profession, how many of the data's recipes the client says are known (by each way
   of asking) and compares with the game's window when it is open; result also in `FabrikaoDB.probe` (SavedVariables file after `/reload`)
 - `test/` (WoW API mock + local runner), `setupTests.lua`, `Icons/` (addon icon), `images/screencaps/` (CurseForge description images),

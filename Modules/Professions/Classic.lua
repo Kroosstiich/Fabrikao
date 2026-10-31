@@ -27,9 +27,16 @@ local ENGLISH = {
 -- the windows that are not the trade skill one
 local CRAFT_WINDOW = { [333] = true, [40] = true }
 
+-- the name of a spell in the player's language (the older global, or C_Spell on the clients that dropped it)
 local function spellName(id)
-    if not (id and GetSpellInfo) then return nil end
-    local name = GetSpellInfo(id)
+    if not id then return nil end
+    local name
+    if GetSpellInfo then
+        name = GetSpellInfo(id)
+    elseif C_Spell and C_Spell.GetSpellInfo then
+        local info = C_Spell.GetSpellInfo(id)
+        name = info and info.name
+    end
     if type(name) == "string" and name ~= "" then return name end
     return nil
 end
@@ -299,7 +306,7 @@ if ns.IsClassic and ns.IsClassic() then ns.Classic_Start() end
 ---------------------------------------------------------------------------------------------------
 -- The name of the spell that opens the profession's window.
 local function openSpellName(skill)
-    return spellName(OPEN_SPELL[skill])
+    return spellName(OPEN_SPELL[skill]) or (skill ~= 186 and ENGLISH[skill]) or (skill == 186 and "Smelting") or nil -- (English: better than nothing)
 end
 
 -- Selects the recipe in the window that is open. False when no window shows it.
@@ -330,7 +337,8 @@ function ns.Craft_Secure(button)
     local secure = CreateFrame("Button", nil, button, "SecureActionButtonTemplate")
     secure:SetAllPoints(button)
     secure:SetFrameLevel(button:GetFrameLevel() + 5)
-    secure:RegisterForClicks("LeftButtonUp")
+    -- (the game fires a secure button on the key down or the key up by a setting, and only for the ones the button is registered for)
+    secure:RegisterForClicks("AnyUp", "AnyDown")
     secure:SetAttribute("type", "spell")
     secure:SetScript("OnEnter", function()
         local onEnter = button:GetScript("OnEnter")
@@ -340,7 +348,10 @@ function ns.Craft_Secure(button)
         local onLeave = button:GetScript("OnLeave")
         if onLeave then onLeave(button) end
     end)
-    secure:SetScript("PostClick", function(self)
+    secure:SetScript("PostClick", function(self, _, down)
+        -- once per click: on the half the game acts on
+        local onDown = GetCVarBool and GetCVarBool("ActionButtonUseKeyDown") and true or false
+        if down ~= nil and (down and true or false) ~= onDown then return end
         local recipeID, skill = self.recipeID, self.skillLine
         if recipeID then C_Timer.After(0.3, function() ns.Craft_Open(recipeID, skill) end) end
     end)

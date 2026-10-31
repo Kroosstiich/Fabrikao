@@ -48,7 +48,8 @@ function ns.Probe()
             api = {
                 GetNumSkillLines = GetNumSkillLines ~= nil, GetNumTradeSkills = GetNumTradeSkills ~= nil, GetNumCrafts = GetNumCrafts ~= nil,
                 GetTradeSkillRecipeLink = GetTradeSkillRecipeLink ~= nil, GetCraftItemLink = GetCraftItemLink ~= nil,
-                IsSpellKnown = IsSpellKnown ~= nil, ExpandTradeSkillSubClass = ExpandTradeSkillSubClass ~= nil,
+                IsSpellKnown = IsSpellKnown ~= nil, GetSpellInfo = GetSpellInfo ~= nil, CSpellGetSpellInfo = C_Spell ~= nil and C_Spell.GetSpellInfo ~= nil,
+                GetCVarBool = GetCVarBool ~= nil, InCombatLockdown = InCombatLockdown ~= nil, ExpandTradeSkillSubClass = ExpandTradeSkillSubClass ~= nil,
                 C_TradeSkillUI = C_TradeSkillUI ~= nil, C_SpellBook = C_SpellBook ~= nil, GetProfessions = GetProfessions ~= nil,
             },
             tradeWindow = TradeSkillFrame ~= nil and TradeSkillFrame:IsShown() or false,

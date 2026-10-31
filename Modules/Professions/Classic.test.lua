@@ -389,6 +389,26 @@ describe("Classic clients", function()
             assert.are.equal(2, picked)
         end)
 
+        it("acts once per click, on the half of the click the game acts on", function()
+            setup()
+            tradeWindow({ { "Elixir", "easy", 3101 } })
+            local picks = 0
+            _G.TradeSkillFrame_SetSelection = function() picks = picks + 1 end
+            local button = WowMock.NewFrame("Button", nil, nil)
+            ns.Craft_Secure(button)
+            ns.Craft_Prepare(button, 3101, 171)
+            local post = button.secure._scripts.PostClick
+            _G.GetCVarBool = function() return true end -- (on the key down)
+            post(button.secure, "LeftButton", true)
+            post(button.secure, "LeftButton", false)
+            assert.are.equal(1, picks)
+            _G.GetCVarBool = function() return false end -- (on the key up)
+            post(button.secure, "LeftButton", true)
+            post(button.secure, "LeftButton", false)
+            _G.GetCVarBool = nil
+            assert.are.equal(2, picks)
+        end)
+
         it("picks it in the craft window too", function()
             setup()
             craftWindow({ { "Enchant Bracer - Minor Health", "optimal", 7418 } })

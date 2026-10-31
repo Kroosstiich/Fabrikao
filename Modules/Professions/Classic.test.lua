@@ -273,6 +273,61 @@ describe("Classic clients", function()
             assert.is_true(FabrikaoCharDB.knownRecipes[7418])
         end)
 
+        describe("when one is learned", function()
+            before_each(function()
+                _G.ERR_LEARN_RECIPE_S = "You have learned how to create a new item: %s."
+                _G.ERR_LEARN_SPELL_S = "You have learned a new spell: %s."
+            end)
+            after_each(function() _G.ERR_LEARN_RECIPE_S, _G.ERR_LEARN_SPELL_S = nil, nil end)
+
+            it("is read from the chat message, by the spell in its link", function()
+                setup()
+                assert.are.equal(3101, ns.Classic_Learned("You have learned how to create a new item: |cff71d5ff|Hspell:3101|h[Elixir]|h|r."))
+                assert.is_true(ns.RecipeDB_Known(3101))
+            end)
+
+            it("is read by the enchant link of a formula", function()
+                setup()
+                assert.are.equal(7418, ns.Classic_Learned("You have learned a new spell: |cff71d5ff|Henchant:7418|h[Enchant Bracer]|h|r."))
+            end)
+
+            it("is read by the name, when the profession is the character's", function()
+                setup()
+                skillRows({ { "Cooking", false, false, 40, 75, false } })
+                assert.are.equal(2549, ns.Classic_Learned("You have learned how to create a new item: [Boiled Clams]."))
+                assert.is_true(ns.RecipeDB_Known(2549))
+            end)
+
+            it("is not guessed from the name of another profession's recipe", function()
+                setup()
+                skillRows({ { "Cooking", false, false, 40, 75, false } })
+                assert.is_nil(ns.Classic_Learned("You have learned how to create a new item: [Elixir of Lion's Strength]."))
+                assert.is_false(ns.RecipeDB_Known(3101))
+            end)
+
+            it("ignores the other system messages", function()
+                setup()
+                assert.is_nil(ns.Classic_Learned("You have reached level 12."))
+                assert.is_nil(ns.Classic_Learned(nil))
+            end)
+
+            it("makes the window draw again", function()
+                setup()
+                ns.Classic_Start()
+                local refreshed = 0
+                ns.UI_Refresh = function() refreshed = refreshed + 1 end
+                FireEvent("CHAT_MSG_SYSTEM", "You have learned how to create a new item: |Hspell:3101|h[Elixir]|h.")
+                assert.is_true(refreshed >= 1)
+                assert.is_true(ns.RecipeDB_Known(3101))
+                refreshed = 0
+                FireEvent("TRAINER_UPDATE")
+                assert.are.equal(1, refreshed)
+                refreshed = 0
+                FireEvent("CHAT_MSG_SYSTEM", "Welcome to the game")
+                assert.are.equal(0, refreshed)
+            end)
+        end)
+
         it("are saved for the roster as soon as they are found", function()
             setup()
             skillRows({ { "Alchemy", false, false, 120, 150, true } })

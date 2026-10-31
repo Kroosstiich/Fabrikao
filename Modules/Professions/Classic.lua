@@ -269,7 +269,10 @@ function ns.Classic_Scan()
         end
     end
     scanning = false
-    if added > 0 and ns.Roster_Snapshot then ns.Roster_Snapshot(false) end
+    if added > 0 then
+        if ns.Roster_Snapshot then ns.Roster_Snapshot(false) end
+        if ns.UI_Refresh then ns.UI_Refresh() end
+    end
     return added
 end
 
@@ -286,17 +289,79 @@ local function schedule()
     end)
 end
 
+---------------------------------------------------------------------------------------------------
+-- Recipes learned
+---------------------------------------------------------------------------------------------------
+-- The game tells in chat ("You have learned how to create a new item: [Beer Basted Boar Ribs]") when a recipe is learned, and these clients
+-- have no event of their own for it, so the message is read: the link in it names the spell, or the item it makes, or just the recipe.
+local function messagePattern(format)
+    if type(format) ~= "string" then return nil end
+    local escaped = format:gsub("%%s", "\1"):gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0"):gsub("\1", "(.+)")
+    return "^" .. escaped .. "$"
+end
+
+-- Marks as known the recipe a "learned" chat message names. Returns the spell id, or nil when the message is not about a recipe of the data.
+function ns.Classic_Learned(text)
+    if type(text) ~= "string" then return nil end
+    local what
+    for _, name in ipairs({ "ERR_LEARN_RECIPE_S", "ERR_LEARN_SPELL_S" }) do
+        local pattern = messagePattern(_G[name])
+        what = pattern and text:match(pattern)
+        if what then break end
+    end
+    if not what then return nil end
+    local spell = tonumber(what:match("spell:(%d+)") or what:match("enchant:(%d+)"))
+    if not (spell and ns.RecipeDB_Get(spell)) then
+        spell = nil
+        local item = tonumber(what:match("item:(%d+)"))
+        local name = what:match("%[(.-)%]") or what
+        -- (the item it makes, or its name; a recipe of a profession the character does not have is not the one)
+        local mine = {}
+        for _, line in ipairs(ns.Classic_SkillLines()) do mine[line.skillLine] = true end
+        for id, recipe in ns.RecipeDB_Each() do
+            if (mine[recipe.s] or recipe.s == 40) and ((item and recipe.p and recipe.p[1] == item) or recipe.n == name) then
+                spell = id
+                break
+            end
+        end
+    end
+    local saved = store()
+    if not (spell and saved) then return nil end
+    saved[spell] = true
+    return spell
+end
+
+local learnPending = false
+-- Soon, and once for a burst: the recipes now known are saved and the window draws them.
+local function afterLearning()
+    if learnPending then return end
+    learnPending = true
+    C_Timer.After(0.5, function()
+        learnPending = false
+        if ns.Roster_Snapshot then ns.Roster_Snapshot(false) end
+        if ns.UI_Refresh then ns.UI_Refresh() end
+    end)
+end
+
 local started = false
 -- Starts listening for the windows (the events don't exist on Forever, which never gets here).
 function ns.Classic_Start()
     if started then return end
     started = true
     local frame = CreateFrame("Frame")
-    for _, event in ipairs({ "TRADE_SKILL_SHOW", "TRADE_SKILL_UPDATE", "CRAFT_SHOW", "CRAFT_UPDATE" }) do
+    local events = { "TRADE_SKILL_SHOW", "TRADE_SKILL_UPDATE", "CRAFT_SHOW", "CRAFT_UPDATE", "CHAT_MSG_SYSTEM", "TRAINER_UPDATE", "SKILL_LINES_CHANGED" }
+    for _, event in ipairs(events) do
         pcall(frame.RegisterEvent, frame, event)
     end
-    frame:SetScript("OnEvent", function()
-        if ns.IsClassic() then schedule() end
+    frame:SetScript("OnEvent", function(_, event, text)
+        if not ns.IsClassic() then return end
+        if event == "CHAT_MSG_SYSTEM" then
+            if ns.Classic_Learned(text) then afterLearning() end
+        elseif event == "TRAINER_UPDATE" or event == "SKILL_LINES_CHANGED" then
+            afterLearning() -- (a recipe bought from a trainer; a skill that went up)
+        else
+            schedule()
+        end
     end)
 end
 if ns.IsClassic and ns.IsClassic() then ns.Classic_Start() end

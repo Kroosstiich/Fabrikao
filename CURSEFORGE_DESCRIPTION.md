@@ -1,6 +1,6 @@
 # Fabrikao!!
 
-**Your professions companion.** Fabrikao!! lists every recipe of every profession in WoW Forever -- the ones you know,
+**Your professions companion.** Fabrikao!! lists every recipe of every profession in WoW Forever, Classic Era and TBC Anniversary -- the ones you know,
 colored by difficulty with how many you can make, and the ones you don't, with the skill they need and exactly where to
 learn them: which trainer, which vendor, which creature drops them, with the distance and a button to show it on the map.
 

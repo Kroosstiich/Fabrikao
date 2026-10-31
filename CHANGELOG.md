@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- New: Classic Era and TBC Anniversary. The same addon now loads on those clients (one folder, a TOC per client), with the recipes of each game, including Jewelcrafting in TBC.
+- New: on those clients, what a character knows is read from its profession windows the first time they are opened (and every time after), so open each profession once. The Craft button opens the profession's window on the recipe.
+- Data: the recipes of Classic Era and TBC come from the game's own tables and public databases. Training costs and the books and quests of the Expert and Artisan ranks are not in it yet.
+
 ## 0.4.6
 
 - Data: the trainers of several professions, as the public databases have them now.

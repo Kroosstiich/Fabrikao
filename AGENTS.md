@@ -19,7 +19,7 @@ same conventions: `Completao` (the original template), `Embolsao` and `Aggreao`,
 
 Addon files at the repo root, packaged as the folder `Fabrikao` (`.pkgmeta`):
 
-- `Fabrikao.toc`, `Fabrikao_Vanilla.toc`, `Fabrikao_TBC.toc`: one per client (the game picks the `_Vanilla` / `_TBC` one by suffix), all with the same files: `Load_Core.xml` (Flavor, Compat, Locale, Settings), the client's `Data...Recipes.lua`, then `Load_Modules.xml` (everything else, `Fabrikao.lua` last). A new module goes in `Load_Modules.xml`. `Fabrikao.lua` is the entry point: events and `/fabrikao`, `/fab`
+- `Fabrikao.toc`, `Fabrikao_Vanilla.toc`, `Fabrikao_TBC.toc`: one per client (the game picks the `_Vanilla` / `_TBC` one by suffix), all with the same files: `Load_Core.xml` (Flavor, Compat, Locale, Settings), the client's `Data\...\Recipes.lua`, then `Load_Modules.xml` (everything else, `Fabrikao.lua` last). A new module goes in `Load_Modules.xml`. `Fabrikao.lua` is the entry point: events and `/fabrikao`, `/fab`
 - `Modules/Core/Flavor.lua` (`ns.flavor` from the interface number: forever / vanilla / tbc; `ns.IsClassic()`, asked at run time, never at load) and `Compat.lua` (`ns.ItemName / ItemIcon / SpellIcon / ItemInstant`: the `C_Item` / `C_Spell` answer first, the older global as the fallback)
 - `Localization/Locale.lua` — English text is the key, with the Spanish (esES/esMX) table; more locales can be added as files
 - `Modules/Settings/` — settings per character or shared by the account; new modules go in their own `Modules/<Area>/` folder and are
@@ -147,7 +147,7 @@ and the two Craft buttons, each behind `ns.IsClassic()`):
   (`AcquireMethod` 1) is a trainer's, the skill it is learned at is the table's, else Forever's for the same spell, else 20 under the yellow level;
   Poisons are always the rogue trainer's. No training costs and no `ranks` yet (the Expert / Artisan books and quests of Cooking, First Aid and
   Fishing). Regenerate when a client patches; there is no daily job for these two files, and Forever's refresh does not touch them.
-- Deploy to a client with robocopy from PowerShell (not bash): `robocopy <worktree> "D:GamesWorld of Warcraft_anniversary_InterfaceAddOnsFabrikao" *.lua *.toc *.png *.xml /S /PURGE /XD tools images .github .git test .claude /XF *.test.lua setupTests.lua`
+- Deploy to a client with robocopy from PowerShell (not bash): `robocopy <worktree> "D:\Games\World of Warcraft\_anniversary_\Interface\AddOns\Fabrikao" *.lua *.toc *.png *.xml /S /PURGE /XD tools images .github .git test .claude /XF *.test.lua setupTests.lua`
   (also `_classic_era_`; exit codes 0-7 are success). The tests load each toc with `LoadAddon({ toc = "Fabrikao_Vanilla.toc" })`.
 
 ## Commands (PowerShell, repo root)

@@ -324,12 +324,38 @@ function ns.RecipeDB_TrainerKey(skillLine)
     return best
 end
 
+-- The trainers that teach a recipe (its record), for the character's side: those of its profession, or, when the data says which ones
+-- teach it (`t`, the ids of the NPCs: Classic Era and TBC), only those.
+local function trainersOf(recipe)
+    local db = data()
+    local list = db and db.trainers and db.trainers[recipe.s] or {}
+    local only
+    if recipe.t then
+        only = {}
+        for _, id in ipairs(recipe.t) do only[id] = true end
+    end
+    local mine = {}
+    for _, trainer in ipairs(list) do
+        if (not only or only[trainer.id]) and forMySide(trainer) then mine[#mine + 1] = trainer end
+    end
+    return mine
+end
+
 -- How near the closest trainer or vendor that teaches a recipe (its record) is: the trainer key of its profession when trainers teach
 -- it, and the vendors of the item that teaches it for the character's side; NOBODY (after everyone) when no one is known to.
 function ns.RecipeDB_TeacherKey(recipe, trainerKey)
     local best = NOBODY
     for _, code in ipairs(recipe.k or {}) do
-        if code == 6 and trainerKey and trainerKey < best then best = trainerKey end
+        if code == 6 and recipe.t then
+            -- (only some of the profession's trainers teach it: the nearest of those)
+            local here = playerMap()
+            for _, trainer in ipairs(trainersOf(recipe)) do
+                local key = nearKey(trainer, here)
+                if key < best then best = key end
+            end
+        elseif code == 6 and trainerKey and trainerKey < best then
+            best = trainerKey
+        end
     end
     local item = ns.RecipeDB_Item(recipe)
     if item and item.v then
@@ -457,16 +483,12 @@ function ns.RecipeDB_Where(recipe, full)
     local maxTrainers, maxVendors, maxQuests, maxDrops, maxObjects = 3, 5, 3, 4, 3
     if full then maxTrainers, maxVendors, maxQuests, maxDrops, maxObjects = 10, 12, 8, 30, 8 end
     local item = ns.RecipeDB_Item(recipe)
-    local db = data()
 
     local trainable = false
     for _, code in ipairs(recipe.k or {}) do if code == 6 then trainable = true end end
     if trainable then
         local names, npcs, count = {}, {}, 0
-        local mine = {}
-        for _, trainer in ipairs(db and db.trainers[recipe.s] or {}) do
-            if forMySide(trainer) then mine[#mine + 1] = trainer end
-        end
+        local mine = trainersOf(recipe)
         local ordered, distances = nearestFirst(mine)
         for _, trainer in ipairs(ordered) do
             count = count + 1

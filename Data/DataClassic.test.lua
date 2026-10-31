@@ -161,6 +161,22 @@ for _, client in ipairs({
             end
         end)
 
+        it("the trainers a recipe names are trainers of its profession", function()
+            local named = 0
+            for id, r in pairs(db.recipes) do
+                if r.t then
+                    local known = {}
+                    for _, trainer in ipairs(db.trainers[r.s] or {}) do known[trainer.id] = true end
+                    for _, npc in ipairs(r.t) do
+                        named = named + 1
+                        assert.is_true(known[npc] == true, "trainer " .. npc .. " of recipe " .. id)
+                    end
+                    assert.is_true(r.k and r.k[1] == 6, "recipe " .. id .. " names trainers but has no trainer")
+                end
+            end
+            assert.is_true(named > 0)
+        end)
+
         it("the sources of an ingredient are for an ingredient of some recipe", function()
             local used = {}
             for _, r in pairs(db.recipes) do

@@ -316,6 +316,54 @@ describe("Classic clients", function()
         end)
     end)
 
+    describe("who teaches a recipe", function()
+        local function trainerNames(recipe)
+            for _, line in ipairs(ns.RecipeDB_Where(recipe, true)) do
+                if line.title == ns.L["Trainer"] then
+                    local out = {}
+                    for _, entry in ipairs(line.entries) do out[#out + 1] = entry.name end
+                    table.sort(out)
+                    return out
+                end
+            end
+            return {}
+        end
+
+        it("is every trainer of the profession when the data does not say which", function()
+            setup()
+            ns.RECIPE_DATA = {
+                recipes = { [1] = { s = 185, n = "Soup", c = { 1, 20, 40, 60 }, m = { { 10, 1 } }, k = { 6 } } },
+                items = {}, npcs = {},
+                trainers = { [185] = { { id = 7, n = "Eunice", z = { 9001 } }, { id = 8, n = "Ghilm", z = { 9002 } } } },
+            }
+            assert.are.same({ "Eunice", "Ghilm" }, trainerNames(ns.RecipeDB_Get(1)))
+        end)
+
+        it("is only those the data names when it does (Classic Era and TBC)", function()
+            setup()
+            ns.RECIPE_DATA = {
+                recipes = { [1] = { s = 185, n = "Soup", c = { 1, 20, 40, 60 }, m = { { 10, 1 } }, k = { 6 }, t = { 8 } } },
+                items = {}, npcs = {},
+                trainers = { [185] = { { id = 7, n = "Eunice", z = { 9001 } }, { id = 8, n = "Ghilm", z = { 9002 } } } },
+            }
+            assert.are.same({ "Ghilm" }, trainerNames(ns.RecipeDB_Get(1)))
+        end)
+
+        it("makes the nearest of those the key to order the recipes you can learn by", function()
+            setup()
+            ns.RECIPE_DATA = {
+                recipes = { [1] = { s = 185, n = "Soup", c = { 1, 20, 40, 60 }, m = { { 10, 1 } }, k = { 6 }, t = { 8 } } },
+                items = {}, npcs = { [7] = { 1453, 1, 1 }, [8] = { 1453, 2, 2 } },
+                trainers = { [185] = { { id = 7, n = "Eunice", z = { 9001 } }, { id = 8, n = "Ghilm", z = { 9002 } } } },
+            }
+            ns.Map_Distance = function(spot) return spot.x == 1 and 10 or 500 end
+            local recipe = ns.RecipeDB_Get(1)
+            assert.are.equal(500, ns.RecipeDB_TeacherKey(recipe, ns.RecipeDB_TrainerKey(185)))
+            recipe.t = nil -- (every trainer of the profession: the nearest one, Eunice)
+            assert.are.equal(10, ns.RecipeDB_TeacherKey(recipe, ns.RecipeDB_TrainerKey(185)))
+        end)
+    end)
+
     describe("the recipes lists", function()
         it("come from the data, with what the windows said is known", function()
             setup()

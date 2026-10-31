@@ -117,6 +117,50 @@ for _, client in ipairs({
             end
         end)
 
+        it("most of what a trainer teaches has its cost, and the chances are in range", function()
+            local trained, costed = 0, 0
+            for _, r in pairs(db.recipes) do
+                for _, code in ipairs(r.k or {}) do
+                    if code == 6 then
+                        trained = trained + 1
+                        if r.g then costed = costed + 1 end
+                    end
+                end
+                if r.g then assert.is_true(r.g > 0 and r.g < 10000000, "cost of " .. r.n) end
+            end
+            assert.is_true(trained > 400)
+            assert.is_true(costed > trained * 0.8)
+            for id, item in pairs(db.items) do
+                for _, drop in ipairs(item.d or {}) do
+                    assert.is_truthy(drop.pm == nil or (drop.pm >= 0 and drop.pm <= 10000), "chance of a drop of item " .. id)
+                end
+            end
+            for id, reagent in pairs(db.reagents) do
+                for _, key in ipairs({ "d", "k" }) do
+                    for _, entry in ipairs(reagent[key] or {}) do
+                        assert.is_truthy(entry.pm == nil or (entry.pm >= 0 and entry.pm <= 10000), key .. " chance of ingredient " .. id)
+                    end
+                end
+                for _, zone in ipairs(reagent.f or {}) do
+                    assert.is_truthy(type(zone.z) == "number" and zone.pm >= 0 and zone.pm <= 10000, "fishing zone of " .. id)
+                end
+            end
+        end)
+
+        it("the Expert rank is a book and the Artisan one a quest, for Cooking and First Aid", function()
+            for _, skill in ipairs({ 185, 129 }) do
+                local ranks = db.ranks[skill]
+                assert.is_not_nil(ranks, "ranks of " .. skill)
+                assert.is_truthy(ranks[225] and ranks[225].b and #ranks[225].b[1].v > 0, "book of " .. skill)
+                assert.is_truthy(ranks[300] and ranks[300].q and #ranks[300].q[1].g > 0, "quest of " .. skill)
+                assert.is_not_nil(db.trainers[skill])
+            end
+            for skill, caps in pairs(db.ranks) do
+                assert.is_not_nil(db.trainers[skill], "trainers of " .. skill)
+                for cap in pairs(caps) do assert.is_true(cap == 225 or cap == 300, "rank " .. cap .. " of " .. skill) end
+            end
+        end)
+
         it("the sources of an ingredient are for an ingredient of some recipe", function()
             local used = {}
             for _, r in pairs(db.recipes) do

@@ -142,11 +142,16 @@ and the two Craft buttons, each behind `ns.IsClassic()`):
   clients; `/fab probe` prints what each client answers (skill rows, windows, APIs, recipes saved from the windows).
 - **Data**: `tools/local/classic/build_classic.mjs --flavor vanilla|tbc --out <Recipes.lua> --forever Data/Generated/Recipes.lua` (git-ignored, local) builds each
   file from the client tables (wago.tools CSVs in `tools/local/cache/open/wago/vanilla|tbc/`: SkillLineAbility, SpellName, SpellReagents, SpellEffect,
-  ItemSparse, ItemEffect) and Questie's database (`tools/local/cache/questie/Vanilla|TBC/`, from the QuestieDB releases). The tables say what the
-  recipes are and which items teach them, not who trains what: a recipe with no teaching item that is not learned with the profession
-  (`AcquireMethod` 1) is a trainer's, the skill it is learned at is the table's, else Forever's for the same spell, else 20 under the yellow level;
-  Poisons are always the rogue trainer's. No training costs and no `ranks` yet (the Expert / Artisan books and quests of Cooking, First Aid and
-  Fishing). Regenerate when a client patches; there is no daily job for these two files, and Forever's refresh does not touch them.
+  ItemSparse, ItemEffect), Questie's database (`tools/local/cache/questie/Vanilla|TBC/`, from the QuestieDB releases; vendors, quests, droppers, NPCs and
+  where they stand) and CMaNGOS' world database (`tools/local/cache/cmangos/classic.sql.gz` and `tbc.sql.gz`, from `cmangos/classic-db` and `cmangos/tbc-db`
+  Full_DB, GPL-3; read by `tools/local/classic/cmangos.mjs`). The client tables say what the recipes are and which items teach them; CMaNGOS says who
+  trains what (`npc_trainer` and `npc_trainer_template`): a recipe a trainer teaches is a trainer's, with its cost and the skill it is learned at, and the
+  trainers of a skill are the NPCs that teach one of its recipes; a recipe with no trainer and no teaching item that comes with the profession
+  (`AcquireMethod` 1) is a starter one; the rest have no known source. CMaNGOS also gives the drop chances of the teaching items and ingredients
+  (direct loot only, references are not followed), the creatures skinned for an ingredient, the fishing zones, and the quests (`RewSpell`) that give the
+  Artisan rank of Cooking, First Aid and Fishing; the Expert books come from the client tables. Poisons are always the rogue trainers'. The skill a recipe
+  with no trainer data is learned at is Forever's for the same spell, else 20 under the yellow level (`requiredFromForever` / `requiredGuessed` in the
+  report). Regenerate when a client patches; there is no daily job for these two files, and Forever's refresh does not touch them.
 - Deploy to a client with robocopy from PowerShell (not bash): `robocopy <worktree> "D:\Games\World of Warcraft\_anniversary_\Interface\AddOns\Fabrikao" *.lua *.toc *.png *.xml /S /PURGE /XD tools images .github .git test .claude /XF *.test.lua setupTests.lua`
   (also `_classic_era_`; exit codes 0-7 are success). The tests load each toc with `LoadAddon({ toc = "Fabrikao_Vanilla.toc" })`.
 

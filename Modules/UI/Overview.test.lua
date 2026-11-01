@@ -318,7 +318,7 @@ describe("The start screen", function()
             openGroups()
             click(learnRow("Orphan Plans"))
             assert.are.same({}, teachers())
-            assert.are.equal(1, #text("No trainer, vendor or drop is known"))
+            assert.are.equal(1, #text("No source is known"))
         end)
 
         it("lists the creatures that drop what teaches it, after the vendors, with their level and chance", function()
@@ -337,6 +337,22 @@ describe("The start screen", function()
             DATA.recipes[9].i, DATA.recipes[9].k, DATA.items[902] = nil, { 2 }, nil
         end)
 
+        it("lists the containers an item is found in, after the vendors, when no creature is known to drop it", function()
+            DATA.recipes[9].i = 904
+            DATA.items[904] = { n = "Plans: Orphan Plans", lv = 11,
+                v = { { id = 15, n = "Hammer Hal", z = { 1519 } } },
+                o = { { id = 2850, n = "Solid Chest", z = { 1519 } }, { id = 2849, n = "Battered Chest", z = { 1519 } } } }
+            openGroups()
+            click(learnRow("Orphan Plans"))
+            assert.are.same({ "Hammer Hal", "Solid Chest (Stormwind City)", "Battered Chest (Stormwind City)" }, teachers())
+            local row = framesWith("teacher")[2]
+            assert.matches("^Found in", row.where._text)
+            assert.matches("Solid Chest", row.name._text)
+            assert.is_false(row.mapButton:IsShown())
+            assert.are.equal(0, #text("No source is known"))
+            DATA.recipes[9].i, DATA.items[904] = nil, nil
+        end)
+
         it("says that an item that drops from any creature is a world drop", function()
             DATA.recipes[9].i = 903
             DATA.items[903] = { n = "Plans: Orphan Plans", k = { 2 }, lv = 11, cd = 1 }
@@ -346,7 +362,7 @@ describe("The start screen", function()
             assert.matches("World drop: any creature of about level 11", row.name._text)
             assert.matches("^Drop", row.where._text)
             assert.is_false(row.mapButton:IsShown())
-            assert.are.equal(0, #text("No trainer, vendor or drop is known"))
+            assert.are.equal(0, #text("No source is known"))
             DATA.recipes[9].i, DATA.items[903] = nil, nil
         end)
 

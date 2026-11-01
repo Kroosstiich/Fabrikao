@@ -421,7 +421,8 @@ function ns.Recipes_Teachers(db)
     local out = {}
     for _, line in ipairs(ns.RecipeDB_Where(db, true)) do
         local kind = (line.title == ns.L["Trainer"] and "trainer") or (line.title == ns.L["Vendor"] and "vendor")
-            or (line.title == ns.L["Quest"] and "quest") or (line.title == ns.L["Drop"] and "drop") or nil
+            or (line.title == ns.L["Quest"] and "quest") or (line.title == ns.L["Drop"] and "drop")
+            or (line.title == ns.L["Found in"] and "found") or nil
         if kind then
             local entries = line.entries
             if kind == "drop" and not entries and line.text then entries = { { text = line.text } } end -- (a world drop has no creature)
@@ -433,10 +434,11 @@ function ns.Recipes_Teachers(db)
             end
         end
     end
-    -- the kinds in one list by distance (those whose distance is not known after); a trainer before a vendor when equal; a drop is
-    -- only a chance, so it comes after everybody who does teach it
+    -- the kinds in one list by distance (those whose distance is not known after); a trainer before a vendor when equal; a drop or a
+    -- container is only a chance, so they come after everybody who does teach it
+    local function byChance(entry) return entry.kind == "drop" or entry.kind == "found" end
     table.sort(out, function(a, b)
-        if (a.kind == "drop") ~= (b.kind == "drop") then return b.kind == "drop" end
+        if byChance(a) ~= byChance(b) then return byChance(b) end
         local da, db2 = a.distance or math.huge, b.distance or math.huge
         if da ~= db2 then return da < db2 end
         return a.order < b.order

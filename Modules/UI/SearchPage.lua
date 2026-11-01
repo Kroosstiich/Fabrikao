@@ -26,10 +26,7 @@ end
 
 -- an item's name, or a placeholder while the client loads it (GET_ITEM_INFO_RECEIVED redraws)
 local function itemName(itemID)
-    local name = C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(itemID)
-    if name then return name end
-    if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(itemID) end
-    return L["item %d"]:format(itemID)
+    return ns.ItemName(itemID) or L["item %d"]:format(itemID)
 end
 
 local function viewName()

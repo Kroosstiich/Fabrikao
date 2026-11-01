@@ -1,7 +1,7 @@
 # Fabrikao!! — agent guide
 
 World of Warcraft professions addon (name: "Fabrikao" ~ Spanish "fabricar", to craft). CurseForge summary: "Your professions companion: browse recipes, plan what to craft, and find out where to get every recipe and ingredient."
-Features (built, see CHANGELOG.md): professions window, every recipe known or not with filters, table and detailed views, recipe panel, global search, trainers/vendors/creatures on the map, optional Embolsao, Auctionator and TomTom integrations (the maintainer adds ideas as they come). **Only for WoW Forever** (`## Interface: 16001`): no compatibility with other clients is needed, so code against Forever's API only.
+Features (built, see CHANGELOG.md): professions window, every recipe known or not with filters, table and detailed views, recipe panel, global search, trainers/vendors/creatures on the map, optional Embolsao, Auctionator and TomTom integrations (the maintainer adds ideas as they come). Runs on three clients: **WoW Forever** (`Fabrikao.toc`, interface 16001), **Classic Era** (`Fabrikao_Vanilla.toc`) and **TBC Anniversary** (`Fabrikao_TBC.toc`). Forever is the retail engine; the other two have the old professions API (see "Classic Era and TBC Anniversary"). **Never break Forever**: every Classic path sits behind `ns.IsClassic()`.
 Public repo `LechuckThePirate/Fabrikao` (branch `master`), GPLv3, CurseForge project id 1733457. Siblings with the
 same conventions: `Completao` (the original template), `Embolsao` and `Aggreao`, under `D:\Source\WowAddons\`.
 
@@ -19,7 +19,8 @@ same conventions: `Completao` (the original template), `Embolsao` and `Aggreao`,
 
 Addon files at the repo root, packaged as the folder `Fabrikao` (`.pkgmeta`):
 
-- `Fabrikao.toc` (load order), `Fabrikao.lua` (entry point: events and `/fabrikao`, `/fab`; loaded last)
+- `Fabrikao.toc`, `Fabrikao_Vanilla.toc`, `Fabrikao_TBC.toc`: one per client (the game picks the `_Vanilla` / `_TBC` one by suffix), all with the same files: `Load_Core.xml` (Flavor, Compat, Locale, Settings), the client's `Data\...\Recipes.lua`, then `Load_Modules.xml` (everything else, `Fabrikao.lua` last). A new module goes in `Load_Modules.xml`. `Fabrikao.lua` is the entry point: events and `/fabrikao`, `/fab`
+- `Modules/Core/Flavor.lua` (`ns.flavor` from the interface number: forever / vanilla / tbc; `ns.IsClassic()`, asked at run time, never at load) and `Compat.lua` (`ns.ItemName / ItemIcon / SpellIcon / ItemInstant`: the `C_Item` / `C_Spell` answer first, the older global as the fallback)
 - `Localization/Locale.lua` — English text is the key, with the Spanish (esES/esMX) table; more locales can be added as files
 - `Modules/Settings/` — settings per character or shared by the account; new modules go in their own `Modules/<Area>/` folder and are
   added to the TOC. Every `X.lua` has `X.test.lua` next to it
@@ -65,10 +66,13 @@ Addon files at the repo root, packaged as the folder `Fabrikao` (`.pkgmeta`):
   Everything that asks "does the character know it?" goes through `ns.Roster_Knows`, and the professions through `ns.Professions_List`
 - `Modules/UI/` — `MainWindow.lua` (the frame and the recipes page; the start screen is `Overview.lua`), `SearchPage.lua` (search of every recipe in the data, with a detail
   panel) and `MinimapButton.lua`; `Bindings.xml` has the key binding (the game loads it itself: **never list it in the TOC**)
-- `Data/Generated/Recipes.lua` (**generated, never edit by hand**) — every recipe of the crafting professions (skill levels where each
+- `Data/Vanilla/Generated/Recipes.lua` and `Data/TBC/Generated/Recipes.lua` (**generated, never edit by hand**): the same shape for Classic Era and TBC Anniversary, see below; `Data/DataClassic.test.lua` checks them
+- `Data/Generated/Recipes.lua` (Forever's; **generated, never edit by hand**) — every recipe of the crafting professions (skill levels where each
   turns orange / yellow / green / grey, ingredients, product, how it is learned), the items that teach them (vendors, drops, quests)
   and the trainers; `Data/Data.test.lua` checks its shape. `Modules/Data/RecipeDB.lua` queries it (by spell id, search by name /
   ingredient / NPC / zone, "where to learn it" lines)
+- `Modules/Professions/Classic.lua` — everything the Classic clients do differently, see below
+- `Modules/Tooltip/Compare.lua` — `ns.Compare_Show(GameTooltip)`: on the Classic clients (Retail and Forever do it themselves) the tooltip of what a recipe makes gets the comparison tooltips of what is worn (`GameTooltip_ShowCompareItem`, titled "Equipped"), called from `ns.RecipeDB_ShowProductTooltip`; the same as Embolsao's
 - `Modules/Debug/Probe.lua` — `/fab probe` prints, per profession, how many of the data's recipes the client says are known (by each way
   of asking) and compares with the game's window when it is open; result also in `FabrikaoDB.probe` (SavedVariables file after `/reload`)
 - `test/` (WoW API mock + local runner), `setupTests.lua`, `Icons/` (addon icon), `images/screencaps/` (CurseForge description images),
@@ -119,12 +123,47 @@ the player has that profession's tab open. The game's own UI code for Forever (t
 https://github.com/Gethe/wow-ui-source (`Interface/AddOns/Blizzard_Professions*`, `Blizzard_APIDocumentationGenerated`). Anything the docs
 don't settle is verified in game with `/fab probe`.
 
+## Classic Era and TBC Anniversary
+
+What differs from Forever (all in `Modules/Professions/Classic.lua`, called from `Professions.lua`, `RecipeDB.lua`, `Recipes.lua`, `Craft.lua`, `Probe.lua`
+and the two Craft buttons, each behind `ns.IsClassic()`):
+
+- **Professions** are skill lines: `GetNumSkillLines` / `GetSkillLineInfo`, named by English name, by the name of the profession's spell in the player's
+  language, or by an alias learned from a window (`FabrikaoDB.skillAliases`; the game does not always call the skill what it calls the spell). Folded
+  headers of the skills list are opened (and left open: folding them again fires `SKILL_LINES_CHANGED` and the roster would save forever). A profession
+  the character dropped has its recipes forgotten, but only when every primary skill was named.
+- **Known recipes** are not in the spell book there. `TRADE_SKILL_SHOW/UPDATE` and `CRAFT_SHOW/UPDATE` (Enchanting and Poisons use the older craft
+  window) scan the open window: the spell id is inside the recipe link (`enchant:ID`). The ids are kept in `FabrikaoCharDB.knownRecipes`;
+  `IsPlayerSpell` / `IsSpellKnown` are also asked. The scan folds back the headers it opened and ignores the events that causes (`quietUntil`).
+  `C_TradeSkillUI` is never used, so `Recipes_Read` is always nil and the lists come from the data.
+- **Craft** opens the profession window by casting its spell, which only secure code may do: `ns.Craft_Secure(button)` puts a transparent
+  `SecureActionButtonTemplate` over the button and `ns.Craft_Prepare(button, recipeID, skillLine)` sets its `spell` attribute (out of combat only);
+  after the cast, `PostClick` calls `ns.Craft_Open`, which picks the recipe in the window (`ns.Classic_Select`). Mining opens with Smelting.
+  **Not verified in game yet**: whether the cast opens the window from the overlay, and whether `GetTradeSkillRecipeLink` returns `enchant:ID` on both
+  clients; `/fab probe` prints what each client answers (skill rows, windows, APIs, recipes saved from the windows).
+- **Data**: `node tools/classic/build_classic.mjs --flavor vanilla|tbc` (tracked: only open sources, nothing secret) builds each
+  file from the client tables (wago.tools CSVs in `tools/classic/cache/wago/vanilla|tbc/`: SkillLineAbility, SpellName, SpellReagents, SpellEffect,
+  ItemSparse, ItemEffect), Questie's database (`tools/classic/cache/questie/Vanilla|TBC/`, from the QuestieDB releases; vendors, quests, droppers, NPCs and
+  where they stand) and CMaNGOS' world database (`tools/classic/cache/cmangos/classic.sql.gz` and `tbc.sql.gz`, from `cmangos/classic-db` and `cmangos/tbc-db`
+  Full_DB, GPL-3; read by `tools/classic/cmangos.mjs`). The client tables say what the recipes are and which items teach them; CMaNGOS says who
+  trains what (`npc_trainer` and `npc_trainer_template`): a recipe a trainer teaches is a trainer's, with its cost and the skill it is learned at, and the
+  trainers of a skill are the NPCs that teach one of its recipes; a recipe with no trainer and no teaching item that comes with the profession
+  (`AcquireMethod` 1) is a starter one; the rest have no known source. CMaNGOS also gives the drop chances of the teaching items and ingredients
+  (direct loot only, references are not followed), the creatures skinned for an ingredient, the fishing zones, and the quests (`RewSpell`) that give the
+  Artisan rank of Cooking, First Aid and Fishing; the Expert books come from the client tables. Poisons are always the rogue trainers'. The skill a recipe
+  with no trainer data is learned at is Forever's for the same spell, else 20 under the yellow level (`requiredFromForever` / `requiredGuessed` in the
+  report). `node tools/classic/fetch_sources.mjs` downloads the wago tables and the CMaNGOS dumps into the cache (`CLASSIC_CACHE` points it elsewhere); the QuestieDB zips
+  come from the QuestieDB releases. **`.github/workflows/update-classic-data.yml`** does all of it every Monday and opens the pull request `auto/classic-data`
+  (shape check, busted; the maintainer merges). The VPS cron and `update-recipe-data.yml` are Forever's only and do not touch these two files.
+- Deploy to a client with robocopy from PowerShell (not bash): `robocopy <worktree> "D:\Games\World of Warcraft\_anniversary_\Interface\AddOns\Fabrikao" *.lua *.toc *.png *.xml /S /PURGE /XD tools images .github .git test .claude /XF *.test.lua setupTests.lua`
+  (also `_classic_era_`; exit codes 0-7 are success). The tests load each toc with `LoadAddon({ toc = "Fabrikao_Vanilla.toc" })`.
+
 ## Commands (PowerShell, repo root)
 
 ```powershell
 lua test/busted.lua                       # all tests, no busted install needed (Lua 5.1+)
 busted -p ".test.lua" .                   # real busted (what CI runs, Lua 5.1)
-luacheck Fabrikao.lua Localization Modules Fabrikao.test.lua test setupTests.lua   # if installed
+luacheck Fabrikao.lua Localization Modules Data Fabrikao.test.lua test setupTests.lua   # if installed (what CI runs; the generated data is excluded in .luacheckrc)
 ```
 
 No deploy script: copy or symlink the repo root as `Fabrikao` into

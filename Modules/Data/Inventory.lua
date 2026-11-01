@@ -18,7 +18,8 @@ end
 -- Is Embolsao there at all? Fabrikao works without it: this only decides what the preferences say.
 function ns.Inventory_Installed()
     if api() or EmbolsaoDB ~= nil then return true end
-    return C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Embolsao") and true or false
+    local loaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded -- (older clients have only the global)
+    return loaded and loaded("Embolsao") and true or false
 end
 
 local function enabled()

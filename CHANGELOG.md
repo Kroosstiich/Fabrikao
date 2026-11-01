@@ -3,6 +3,10 @@
 ## Unreleased
 
 - New: under a recipe in "You can learn", the creatures that drop the pattern or recipe that teaches it (with their level and chance, and the map and waypoint icons), after the trainers and vendors; an item that drops from any creature says so. The "nobody is known" message is only for recipes with no source at all.
+- New: Classic Era and TBC Anniversary. The same addon now loads on those clients (one folder, a TOC per client), with the recipes of each game, including Jewelcrafting in TBC.
+- New: on those clients, what a character knows is read from its profession windows the first time they are opened (and every time after), so open each profession once. The Craft button opens the profession's window on the recipe.
+- New: on Classic Era and TBC, the tooltip of what a recipe makes also shows what you wear in that slot (both slots for rings, trinkets and weapons), with a green "Equipped" title on it, with no key to hold. Forever already does it by itself.
+- Data: the recipes of Classic Era and TBC come from the game's own tables and open databases: trainers with their cost and the skill they ask, drop and skinning chances, and the books and quests of the Expert and Artisan ranks.
 
 ## 0.4.6
 

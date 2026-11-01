@@ -2,11 +2,13 @@ local _, ns = ...
 
 -- The professions the character has, in the order the window shows them: the primary ones first (as the
 -- game lists them), then First Aid, Cooking and Fishing. Forever uses the retail profession API:
--- GetProfessions() / GetProfessionInfo() for the list, C_TradeSkillUI for everything about recipes.
+-- GetProfessions() / GetProfessionInfo() for the list, C_TradeSkillUI for everything about recipes. Classic Era and TBC Anniversary have
+-- the old one instead (skill lines and the profession windows): Classic.lua.
 
 -- skill lines of the secondary professions, in display order
 local SECONDARY = { [129] = 1, [185] = 2, [356] = 3 } -- First Aid, Cooking, Fishing
 local ARCHAEOLOGY = 794 -- never has recipes
+local QUESTION_MARK = 134400
 
 -- Colors of the difficulty of a recipe, as the game's trade skill windows draw them. The keys are
 -- Enum.TradeskillRelativeDifficulty: 0 optimal (orange), 1 medium (yellow), 2 easy (green), 3 trivial (grey).
@@ -86,8 +88,8 @@ local function poisonsSkill()
     return math.min(300, level * 5), 300
 end
 
--- The professions the playing character has: { { name =, icon =, rank =, maxRank =, skillLine =, primary =, hasRecipes = }, ... }
-function ns.Professions_Mine()
+-- Forever: the list the game gives (GetProfessions).
+local function foreverList()
     local list = {}
     if not (GetProfessions and GetProfessionInfo) then return list end
     local indexes, count = pack(GetProfessions())
@@ -106,6 +108,30 @@ function ns.Professions_Mine()
             end
         end
     end
+    return list
+end
+
+-- Classic Era and TBC Anniversary: the skill lines of the character that are professions (Classic.lua). Herbalism, Skinning and Fishing
+-- are listed but have no recipes.
+local function classicList()
+    local list = {}
+    local lines, unnamed, rows = ns.Classic_SkillLines()
+    local withRecipes = {}
+    for _, skill in ipairs(ns.RecipeDB_Skills and ns.RecipeDB_Skills() or {}) do withRecipes[skill] = true end
+    for _, line in ipairs(lines) do
+        list[#list + 1] = {
+            name = line.name, icon = ns.Classic_SkillIcon(line.skillLine) or QUESTION_MARK, rank = line.rank, maxRank = line.maxRank,
+            skillLine = line.skillLine, primary = not SECONDARY[line.skillLine], hasRecipes = withRecipes[line.skillLine] == true,
+            order = #list + 1,
+        }
+    end
+    ns.Classic_Prune(list, unnamed, rows)
+    return list
+end
+
+-- The professions the playing character has: { { name =, icon =, rank =, maxRank =, skillLine =, primary =, hasRecipes = }, ... }
+function ns.Professions_Mine()
+    local list = ns.IsClassic() and classicList() or foreverList()
     local listed = false
     for _, p in ipairs(list) do
         if p.skillLine == POISONS then listed = true end
@@ -176,9 +202,9 @@ end
 local ICONS = {
     [171] = "Interface\\Icons\\Trade_Alchemy", [164] = "Interface\\Icons\\Trade_BlackSmithing", [333] = "Interface\\Icons\\Trade_Engraving",
     [202] = "Interface\\Icons\\Trade_Engineering", [165] = "Interface\\Icons\\INV_Misc_ArmorKit_17", [197] = "Interface\\Icons\\Trade_Tailoring",
-    [186] = "Interface\\Icons\\Trade_Mining", [185] = "Interface\\Icons\\INV_Misc_Food_15", [129] = "Interface\\Icons\\Spell_Holy_SealOfSalvation",
+    [186] = "Interface\\Icons\\Trade_Mining", [755] = "Interface\\Icons\\INV_Misc_Gem_01", [185] = "Interface\\Icons\\INV_Misc_Food_15",
+    [129] = "Interface\\Icons\\Spell_Holy_SealOfSalvation",
 }
-local QUESTION_MARK = 134400
 
 -- The professions with recipes in the data that `have` (a list as ns.Professions_List returns) lacks, in the data's order:
 -- { { name =, icon =, skillLine =, primary =, hasRecipes = true, learned = false }, ... } (no rank: it isn't learned).

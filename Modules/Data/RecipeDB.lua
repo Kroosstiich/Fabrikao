@@ -66,6 +66,7 @@ end
 
 -- does the character know the recipe? (learned recipes are spells in the spell book)
 function ns.RecipeDB_Known(spellID)
+    if ns.IsClassic() then return ns.Classic_Known(spellID) end -- (a recipe is not in the spell book there)
     local bank = Enum and Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player
     if C_SpellBook and C_SpellBook.IsSpellKnown then
         local ok, known = pcall(C_SpellBook.IsSpellKnown, spellID, bank)
@@ -81,10 +82,9 @@ end
 -- icon of what the recipe makes (or of the recipe itself)
 function ns.RecipeDB_Icon(spellID, recipe)
     local product = recipe.p and recipe.p[1]
-    local icon = product and C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(product)
+    local icon = product and ns.ItemIcon(product)
     if icon then return icon end
-    icon = C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(spellID)
-    return icon or 134400 -- the question mark
+    return ns.SpellIcon(spellID) or 134400 -- the question mark
 end
 
 -- Category of what a recipe makes, to filter by: the slot of armor (hands, wrist...), the kind of weapon, bags, potions, elixirs,
@@ -99,9 +99,8 @@ local categories = {}
 
 local function categoryOf(recipe)
     local product = recipe.p and recipe.p[1]
-    local info = C_Item and C_Item.GetItemInfoInstant
-    if product and info then
-        local _, itemType, subType, equipLoc, _, classID = info(product)
+    if product and (C_Item and C_Item.GetItemInfoInstant or GetItemInfoInstant) then
+        local _, itemType, subType, equipLoc, _, classID = ns.ItemInstant(product)
         if classID == 1 then return L["Bags"] end
         if classID == 4 and equipLoc and equipLoc ~= "" then
             if equipLoc == "INVTYPE_ROBE" then equipLoc = "INVTYPE_CHEST" end -- robes are chests
@@ -133,6 +132,8 @@ function ns.RecipeDB_ShowProductTooltip(owner, spellID, recipe)
     if product and GameTooltip.SetItemByID then
         GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(product)
+        GameTooltip:Show()
+        ns.Compare_Show(GameTooltip) -- (Classic clients: what you wear in that slot, beside it)
     elseif GameTooltip.SetSpellByID then
         GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
         GameTooltip:SetSpellByID(spellID)
@@ -325,12 +326,38 @@ function ns.RecipeDB_TrainerKey(skillLine)
     return best
 end
 
+-- The trainers that teach a recipe (its record), for the character's side: those of its profession, or, when the data says which ones
+-- teach it (`t`, the ids of the NPCs: Classic Era and TBC), only those.
+local function trainersOf(recipe)
+    local db = data()
+    local list = db and db.trainers and db.trainers[recipe.s] or {}
+    local only
+    if recipe.t then
+        only = {}
+        for _, id in ipairs(recipe.t) do only[id] = true end
+    end
+    local mine = {}
+    for _, trainer in ipairs(list) do
+        if (not only or only[trainer.id]) and forMySide(trainer) then mine[#mine + 1] = trainer end
+    end
+    return mine
+end
+
 -- How near the closest trainer or vendor that teaches a recipe (its record) is: the trainer key of its profession when trainers teach
 -- it, and the vendors of the item that teaches it for the character's side; NOBODY (after everyone) when no one is known to.
 function ns.RecipeDB_TeacherKey(recipe, trainerKey)
     local best = NOBODY
     for _, code in ipairs(recipe.k or {}) do
-        if code == 6 and trainerKey and trainerKey < best then best = trainerKey end
+        if code == 6 and recipe.t then
+            -- (only some of the profession's trainers teach it: the nearest of those)
+            local here = playerMap()
+            for _, trainer in ipairs(trainersOf(recipe)) do
+                local key = nearKey(trainer, here)
+                if key < best then best = key end
+            end
+        elseif code == 6 and trainerKey and trainerKey < best then
+            best = trainerKey
+        end
     end
     local item = ns.RecipeDB_Item(recipe)
     if item and item.v then
@@ -458,16 +485,12 @@ function ns.RecipeDB_Where(recipe, full)
     local maxTrainers, maxVendors, maxQuests, maxDrops, maxObjects = 3, 5, 3, 4, 3
     if full then maxTrainers, maxVendors, maxQuests, maxDrops, maxObjects = 10, 12, 8, 30, 8 end
     local item = ns.RecipeDB_Item(recipe)
-    local db = data()
 
     local trainable = false
     for _, code in ipairs(recipe.k or {}) do if code == 6 then trainable = true end end
     if trainable then
         local names, npcs, count = {}, {}, 0
-        local mine = {}
-        for _, trainer in ipairs(db and db.trainers[recipe.s] or {}) do
-            if forMySide(trainer) then mine[#mine + 1] = trainer end
-        end
+        local mine = trainersOf(recipe)
         local ordered, distances = nearestFirst(mine)
         for _, trainer in ipairs(ordered) do
             count = count + 1
@@ -652,10 +675,10 @@ end
 
 local SKILL_NAMES = {
     [171] = "Alchemy", [164] = "Blacksmithing", [333] = "Enchanting", [202] = "Engineering", [165] = "Leatherworking",
-    [197] = "Tailoring", [186] = "Mining", [185] = "Cooking", [129] = "First Aid", [40] = "Poisons",
+    [197] = "Tailoring", [186] = "Mining", [185] = "Cooking", [129] = "First Aid", [40] = "Poisons", [755] = "Jewelcrafting",
 }
 -- the order the professions are listed in a filter
-local SKILL_ORDER = { 171, 164, 333, 202, 165, 197, 186, 185, 129, 40 }
+local SKILL_ORDER = { 171, 164, 333, 202, 165, 197, 755, 186, 185, 129, 40 }
 
 -- the profession's name in the player's language (from the client), or its English one
 function ns.RecipeDB_SkillName(skill)
@@ -663,6 +686,10 @@ function ns.RecipeDB_SkillName(skill)
         local spell = C_Spell and C_Spell.GetSpellInfo and C_Spell.GetSpellInfo(2842)
         local name = (spell and spell.name) or (GetSpellInfo and GetSpellInfo(2842))
         if type(name) == "string" and name ~= "" then return name end
+    end
+    if ns.IsClassic() then
+        local classic = ns.Classic_SkillName(skill)
+        if classic then return classic end
     end
     local info = C_TradeSkillUI and C_TradeSkillUI.GetProfessionInfoBySkillLineID
         and C_TradeSkillUI.GetProfessionInfoBySkillLineID(skill)

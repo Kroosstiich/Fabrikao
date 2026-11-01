@@ -15,31 +15,6 @@
 ## SavedVariablesPerCharacter: FabrikaoCharDB
 ## X-Curse-Project-ID: 1733457
 
-Localization\Locale.lua
-Modules\Settings\Settings.lua
+Load_Core.xml
 Data\Generated\Recipes.lua
-Modules\Data\RecipeDB.lua
-Modules\Data\Seasonal.lua
-Modules\Data\Prices.lua
-Modules\Data\Inventory.lua
-Modules\Data\Quests.lua
-Modules\Map\Map.lua
-Modules\Professions\Professions.lua
-Modules\Professions\Roster.lua
-Modules\Professions\Recipes.lua
-Modules\Professions\Craft.lua
-Modules\UI\AutoScroll.lua
-Modules\UI\IconButton.lua
-Modules\UI\RecipeList.lua
-Modules\UI\FilterBar.lua
-Modules\UI\SearchPage.lua
-Modules\UI\RecipeDetail.lua
-Modules\UI\Trainers.lua
-Modules\UI\Welcome.lua
-Modules\UI\Preferences.lua
-Modules\UI\Overview.lua
-Modules\UI\MainWindow.lua
-Modules\UI\MinimapButton.lua
-Modules\Debug\Probe.lua
-Modules\API\API.lua
-Fabrikao.lua
+Load_Modules.xml

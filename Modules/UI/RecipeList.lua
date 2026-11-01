@@ -29,10 +29,7 @@ local columnButtons = {}
 -- Text of a row
 ---------------------------------------------------------------------------------------------------
 local function itemName(itemID)
-    local name = C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(itemID)
-    if name then return name end
-    if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(itemID) end
-    return L["item %d"]:format(itemID)
+    return ns.ItemName(itemID) or L["item %d"]:format(itemID)
 end
 
 -- how many of an item: the bags' (and with `alts`, everything the account has)
@@ -312,7 +309,7 @@ local function showComponents(b, recipe, alts, x, w, size, top, dash)
         else
             icon:SetPoint("LEFT", b, "LEFT", x + (i - 1) * (size + COMP_GAP), 0)
         end
-        icon.texture:SetTexture(C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(itemID) or 134400)
+        icon.texture:SetTexture(ns.ItemIcon(itemID) or 134400)
         if recipe.learned and owned < reagent.quantity then
             icon.texture:SetVertexColor(1, 0.35, 0.35)
         else

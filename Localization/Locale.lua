@@ -148,6 +148,7 @@ local es = {
     ["More addons by the same author (click a link, then Ctrl+C):"] = "Más addons del mismo autor (clic en un enlace y Ctrl+C):",
     ["What's new"] = "Novedades",
     ["Craft"] = "Fabricar",
+    ["Equipped"] = "Equipado",
     ["Could not open the profession window."] = "No se ha podido abrir la ventana de la profesión.",
     ["Opens the game's profession window on this recipe."] = "Abre la ventana de profesiones del juego en esta receta.",
     ["%d possible with your bags"] = "%d posibles con tus bolsas",

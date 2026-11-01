@@ -1,0 +1,20 @@
+## Interface: 11508, 11509
+## Title: Fabrikao!!
+## Notes: Your professions companion: browse recipes, plan what to craft, and find out where to get every recipe and ingredient.
+## Notes-esES: Tu compañero de profesiones: consulta recetas, planifica qué fabricar y localiza dónde conseguir cada receta e ingrediente.
+## Notes-esMX: Tu compañero de profesiones: consulta recetas, planifica qué fabricar y localiza dónde conseguir cada receta e ingrediente.
+## Category: Professions
+## Category-esES: Profesiones
+## Category-esMX: Profesiones
+## Author: LechuckThePirate
+## Version: 0.4.6
+## X-License: GPL-3.0
+## IconTexture: Interface\AddOns\Fabrikao\Icons\Fabrikao.png
+## OptionalDeps: Embolsao, Auctionator, Completao
+## SavedVariables: FabrikaoDB
+## SavedVariablesPerCharacter: FabrikaoCharDB
+## X-Curse-Project-ID: 1733457
+
+Load_Core.xml
+Data\Vanilla\Generated\Recipes.lua
+Load_Modules.xml

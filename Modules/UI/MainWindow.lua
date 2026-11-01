@@ -447,6 +447,24 @@ function ns.UI_ShowSearch(text, ingredient)
     ns.SearchPage_Show(text, ingredient)
 end
 
+-- Draws again what the window shows, from the data as it is now (a recipe was learned, the skill went up...): the recipes of the open
+-- profession are asked for again, keeping its filters and search.
+function ns.UI_Refresh()
+    if not (frame and frame:IsShown()) then return end
+    local skillLine = state.skillLine
+    if not skillLine then
+        ns.Overview_Refresh()
+        return
+    end
+    local profession = ns.Professions_Get(skillLine)
+    ns.Recipes_Request(skillLine, function(copy)
+        if state.skillLine == skillLine and copy then
+            state.copy = copy
+            refreshRecipes()
+        end
+    end, { rank = profession and profession.learned ~= false and profession.rank or nil, name = profession and profession.name })
+end
+
 function ns.UI_Toggle()
     if not frame then createFrame() end
     if frame:IsShown() then frame:Hide() else frame:Show() end

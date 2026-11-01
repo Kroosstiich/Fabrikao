@@ -1,0 +1,31 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <!-- Shared by every client: loaded once the recipe data is in. What differs between the clients (the professions API)
+         is picked at run time by ns.IsClassic(), not by what is loaded. -->
+    <Script file="Modules\Tooltip\Compare.lua"/>
+    <Script file="Modules\Data\RecipeDB.lua"/>
+    <Script file="Modules\Data\Seasonal.lua"/>
+    <Script file="Modules\Data\Prices.lua"/>
+    <Script file="Modules\Data\Inventory.lua"/>
+    <Script file="Modules\Data\Quests.lua"/>
+    <Script file="Modules\Map\Map.lua"/>
+    <Script file="Modules\Professions\Professions.lua"/>
+    <Script file="Modules\Professions\Classic.lua"/>
+    <Script file="Modules\Professions\Roster.lua"/>
+    <Script file="Modules\Professions\Recipes.lua"/>
+    <Script file="Modules\Professions\Craft.lua"/>
+    <Script file="Modules\UI\AutoScroll.lua"/>
+    <Script file="Modules\UI\IconButton.lua"/>
+    <Script file="Modules\UI\RecipeList.lua"/>
+    <Script file="Modules\UI\FilterBar.lua"/>
+    <Script file="Modules\UI\SearchPage.lua"/>
+    <Script file="Modules\UI\RecipeDetail.lua"/>
+    <Script file="Modules\UI\Trainers.lua"/>
+    <Script file="Modules\UI\Welcome.lua"/>
+    <Script file="Modules\UI\Preferences.lua"/>
+    <Script file="Modules\UI\Overview.lua"/>
+    <Script file="Modules\UI\MainWindow.lua"/>
+    <Script file="Modules\UI\MinimapButton.lua"/>
+    <Script file="Modules\Debug\Probe.lua"/>
+    <Script file="Modules\API\API.lua"/>
+    <Script file="Fabrikao.lua"/>
+</Ui>

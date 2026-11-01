@@ -2,7 +2,8 @@
 
 World of Warcraft professions addon. Your professions companion: browse recipes, plan what to craft, and find out where to get every recipe and ingredient.
 
-Only for WoW Forever (`Fabrikao.toc`: interface 16001). What it does is in `CURSEFORGE_DESCRIPTION.md` and `CHANGELOG.md`: the
+For WoW Forever (`Fabrikao.toc`: interface 16001), Classic Era (`Fabrikao_Vanilla.toc`: 11508, 11509) and TBC Anniversary
+(`Fabrikao_TBC.toc`: 20506). What it does is in `CURSEFORGE_DESCRIPTION.md` and `CHANGELOG.md`: the
 character's professions, every recipe of the game (known or not) with filters, a table and a detailed view, a panel with everything
 known about a recipe, a search of every recipe, trainers, vendors and creatures on the map (and TomTom waypoints), and optional
 the professions and known recipes of your other characters (read only), and optional integrations with Embolsao (items of the other
@@ -33,8 +34,12 @@ request.
 
 ## Data
 
-`Data/Generated/Recipes.lua` is generated, not edited: a daily job refreshes it and
-`.github/workflows/update-recipe-data.yml` opens a pull request with the result (see `AGENTS.md`).
+`Data/Generated/Recipes.lua` (Forever) is generated, not edited: a daily job refreshes it and
+`.github/workflows/update-recipe-data.yml` opens a pull request with the result (see `AGENTS.md`). Classic Era and TBC Anniversary have
+their own, `Data/Vanilla/Generated/Recipes.lua` and `Data/TBC/Generated/Recipes.lua`, generated from open sources by `tools/classic/` and refreshed weekly by
+`.github/workflows/update-classic-data.yml` (a pull request, like the other).
+They are built from the game's own client tables ([wago.tools](https://wago.tools)), [QuestieDB](https://github.com/Questie/QuestieDB) and the
+open [CMaNGOS](https://github.com/cmangos) world databases (all GPL-3 or public data); thanks to their authors.
 
 ## Release
 

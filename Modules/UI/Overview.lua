@@ -208,6 +208,7 @@ local function newCraftRow(content)
         GameTooltip:AddLine(L["Click to open it in the profession window"], 1, 0.82, 0)
         GameTooltip:Show()
     end)
+    ns.Craft_Secure(b) -- (Classic clients only)
     return b
 end
 
@@ -644,6 +645,7 @@ local function layoutCraft()
     for _, craft in ipairs(crafts) do
         local b = q.rows.next()
         b.craft = craft
+        ns.Craft_Prepare(b, craft.recipe.id, craft.skillLine) -- (Classic: the secure overlay opens the profession window)
         b:ClearAllPoints()
         b:SetPoint("TOPLEFT", q.content, "TOPLEFT", 0, -y)
         b:SetPoint("RIGHT", q.content, "RIGHT", 0, 0)

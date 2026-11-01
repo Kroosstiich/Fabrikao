@@ -1,0 +1,128 @@
+name: Update Classic data
+
+# Once a week: rebuild the recipe data of Classic Era and TBC Anniversary (Data/Vanilla/Generated and Data/TBC/Generated) with
+# tools/classic/build_classic.mjs from open sources -- the client tables of the newest builds (wago.tools), the latest QuestieDB release and
+# CMaNGOS' world databases -- and, if anything changed, open a pull request with the result. Nothing is merged here: the maintainer
+# reviews the PR and merges it. Forever's data (Data/Generated) has its own job (update-recipe-data.yml) and is only read here.
+# Needs the repo setting "Allow GitHub Actions to create and approve pull requests" (Settings > Actions > General).
+on:
+  schedule:
+    - cron: '35 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'QuestieDB release tag (default: the latest)'
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-classic-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      CLASSIC_CACHE: ${{ github.workspace }}/.classic-cache
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+
+      - name: Download QuestieDB (Vanilla and TBC)
+        id: questie
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          tag="$INPUT_TAG"
+          if [ -z "$tag" ]; then
+            tag=$(gh release view --repo Questie/QuestieDB --json tagName --jq .tagName)
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          for flavor in Vanilla TBC; do
+            gh release download "$tag" --repo Questie/QuestieDB --pattern "QuestieDB-$flavor.zip" --dir "$RUNNER_TEMP"
+            mkdir -p "$CLASSIC_CACHE/questie/$flavor"
+            unzip -q "$RUNNER_TEMP/QuestieDB-$flavor.zip" -d "$CLASSIC_CACHE/questie/$flavor"
+            test -f "$CLASSIC_CACHE/questie/$flavor/QuestieDB/QuestieDB_$flavor.toc"
+          done
+
+      - name: Download the client tables and CMaNGOS' databases
+        run: node tools/classic/fetch_sources.mjs
+
+      - name: Regenerate Data/Vanilla/Generated
+        run: node tools/classic/build_classic.mjs --flavor vanilla
+
+      - name: Regenerate Data/TBC/Generated
+        run: node tools/classic/build_classic.mjs --flavor tbc
+
+      # shape checks, so a source that answered badly never reaches a pull request: the files must not have lost much
+      - name: Check the result
+        run: |
+          for f in Vanilla TBC; do
+            file="Data/$f/Generated/Recipes.lua"
+            [ "$(head -1 "$file")" = 'local _, ns = ...' ]
+            grep -q '^-- GENERATED' "$file"
+            n=$(grep -c '^        \[[0-9]*\] = {s=' "$file")
+            old=$(git show "HEAD:$file" | grep -c '^        \[[0-9]*\] = {s=')
+            echo "$f: $n recipes (was $old)"
+            [ "$n" -gt $(( old * 95 / 100 )) ]
+          done
+
+      - name: Detect changes
+        id: changes
+        run: |
+          # the generation date alone is not a change
+          if git diff --quiet -I'^    generated = ' -- Data/Vanilla Data/TBC; then
+            git checkout -- Data/Vanilla Data/TBC
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Data/Vanilla and Data/TBC are already up to date with the sources."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Pull requests opened with the default token do not trigger ci.yml, so the tests run here.
+      - name: Install Lua 5.1
+        if: steps.changes.outputs.changed == 'true'
+        uses: leafo/gh-actions-lua@6919171ccf181b826f44b9bca76307b577217377 # v13.0.0
+        with:
+          luaVersion: "5.1"
+
+      - name: Install LuaRocks
+        if: steps.changes.outputs.changed == 'true'
+        uses: leafo/gh-actions-luarocks@35d062def313a7699a0d513e996bcf4352f05389 # v6.1.0
+
+      - name: Install busted
+        if: steps.changes.outputs.changed == 'true'
+        run: luarocks install busted
+
+      - name: Run tests
+        if: steps.changes.outputs.changed == 'true'
+        run: busted -p ".test.lua" .
+
+      - name: Open pull request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: auto/classic-data
+          base: master
+          add-paths: |
+            Data/Vanilla/Generated
+            Data/TBC/Generated
+          commit-message: "data: refresh the Classic Era and TBC recipes"
+          title: "data: refresh the Classic Era and TBC recipes"
+          body: |
+            Automated weekly refresh of the recipe data of Classic Era and TBC Anniversary (`Data/Vanilla/Generated` and
+            `Data/TBC/Generated`), regenerated with `tools/classic/build_classic.mjs` from the client tables of the newest builds, QuestieDB
+            `${{ steps.questie.outputs.tag }}` and CMaNGOS' world databases. Busted passed on this branch.
+
+            Review the diff, add a line under `## Unreleased` in `CHANGELOG.md` if it is worth telling players about, and merge.
+            If this PR is closed without merging, the next run opens a new one.

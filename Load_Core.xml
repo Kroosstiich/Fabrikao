@@ -1,0 +1,8 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <!-- Shared by every client: which game this is, the text and the settings. The recipe data of the client comes next
+         (the toc lists it), then Load_Modules.xml. -->
+    <Script file="Modules\Core\Flavor.lua"/>
+    <Script file="Modules\Core\Compat.lua"/>
+    <Script file="Localization\Locale.lua"/>
+    <Script file="Modules\Settings\Settings.lua"/>
+</Ui>

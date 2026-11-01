@@ -32,14 +32,11 @@ local function colorCode(color)
 end
 
 local function itemName(itemID)
-    local name = C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(itemID)
-    if name then return name end
-    if C_Item and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(itemID) end
-    return L["item %d"]:format(itemID)
+    return ns.ItemName(itemID) or L["item %d"]:format(itemID)
 end
 
 local function itemIcon(itemID)
-    return C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(itemID) or 134400
+    return ns.ItemIcon(itemID) or 134400
 end
 
 local function iconText(texture)
@@ -371,6 +368,8 @@ local function updateCraftBar()
     local craftable = ns.Recipes_Craftable and ns.Recipes_Craftable(recipe, false) or 0
     panel.craftInfo:SetText(L["%d possible with your bags"]:format(craftable))
     panel.craftButton:SetEnabled(craftable > 0) -- nothing to craft with what the bags hold
+    -- (Classic: the click is the secure overlay that opens the profession window, so it follows the button)
+    ns.Craft_Prepare(panel.craftButton, craftable > 0 and recipe.id or nil, recipe.db and recipe.db.s)
 end
 
 local function render()
@@ -520,6 +519,7 @@ local function create(parent)
         GameTooltip:Show()
     end)
     panel.craftButton:SetScript("OnLeave", GameTooltip_Hide)
+    ns.Craft_Secure(panel.craftButton) -- (Classic clients only)
     panel.craftInfo = panel.craftBar:CreateFontString(nil, "OVERLAY", FONT_SMALL)
     panel.craftInfo:SetPoint("LEFT", panel.craftBar, "LEFT", 162, 0)
     panel.craftBar:Hide()

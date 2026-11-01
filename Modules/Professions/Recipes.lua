@@ -410,18 +410,21 @@ function ns.Recipes_LearnableNow(professions, limit, sortBy)
 end
 
 -- Who teaches a recipe of the data (`db` is its record), nearest first (those that are for the character's side): the trainers, the
--- vendors of the item that teaches it, and the quests that give it:
--- { { id =, name =, text =, distance = yards or nil, kind = "trainer" | "vendor" | "quest", questID =, giver = }, ... }.
+-- vendors of the item that teaches it, the quests that give it, and, after all of them, the creatures that drop it:
+-- { { id =, name =, text =, distance = yards or nil, kind = "trainer" | "vendor" | "quest" | "drop", questID =, giver = }, ... }.
 -- A trainer or a vendor is "name (zones)" and the price; a quest is its name, and the id, name and distance are those of the NPC that
--- gives it (for the map and waypoint buttons) when the data has it. The trainers of a recipe are all those of its profession (the data
+-- gives it (for the map and waypoint buttons) when the data has it; a drop is the creature with its level and chance, or, for an item
+-- that drops from any creature, one entry with no id that says so. The trainers of a recipe are all those of its profession (the data
 -- does not say which of them teaches it).
 function ns.Recipes_Teachers(db)
     local out = {}
     for _, line in ipairs(ns.RecipeDB_Where(db, true)) do
         local kind = (line.title == ns.L["Trainer"] and "trainer") or (line.title == ns.L["Vendor"] and "vendor")
-            or (line.title == ns.L["Quest"] and "quest") or nil
+            or (line.title == ns.L["Quest"] and "quest") or (line.title == ns.L["Drop"] and "drop") or nil
         if kind then
-            for _, entry in ipairs(line.entries or {}) do
+            local entries = line.entries
+            if kind == "drop" and not entries and line.text then entries = { { text = line.text } } end -- (a world drop has no creature)
+            for _, entry in ipairs(entries or {}) do
                 out[#out + 1] = {
                     id = entry.id, name = entry.name or entry.text, text = entry.text, distance = entry.distance, kind = kind,
                     questID = entry.questID, giver = entry.giver, order = #out + 1,
@@ -429,8 +432,10 @@ function ns.Recipes_Teachers(db)
             end
         end
     end
-    -- both kinds in one list by distance (those whose distance is not known after); a trainer before a vendor when equal
+    -- the kinds in one list by distance (those whose distance is not known after); a trainer before a vendor when equal; a drop is
+    -- only a chance, so it comes after everybody who does teach it
     table.sort(out, function(a, b)
+        if (a.kind == "drop") ~= (b.kind == "drop") then return b.kind == "drop" end
         local da, db2 = a.distance or math.huge, b.distance or math.huge
         if da ~= db2 then return da < db2 end
         return a.order < b.order

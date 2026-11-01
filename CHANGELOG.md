@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- New: under a recipe in "You can learn", the creatures that drop the pattern or recipe that teaches it (with their level and chance, and the map and waypoint icons), after the trainers and vendors; an item that drops from any creature says so. The "nobody is known" message is only for recipes with no source at all.
+
 ## 0.4.6
 
 - Data: the trainers of several professions, as the public databases have them now.

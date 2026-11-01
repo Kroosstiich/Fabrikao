@@ -318,7 +318,36 @@ describe("The start screen", function()
             openGroups()
             click(learnRow("Orphan Plans"))
             assert.are.same({}, teachers())
-            assert.are.equal(1, #text("No trainer or vendor is known"))
+            assert.are.equal(1, #text("No trainer, vendor or drop is known"))
+        end)
+
+        it("lists the creatures that drop what teaches it, after the vendors, with their level and chance", function()
+            DATA.recipes[9].i = 902
+            DATA.recipes[9].k = { 2, 5 }
+            DATA.items[902] = { n = "Plans: Orphan Plans", k = { 2, 5 },
+                v = { { id = 15, n = "Hammer Hal", z = { 1519 } } },
+                d = { { id = 20, n = "Rare Wolf", z = { 1519 }, lo = 10, hi = 12, pm = 250 } }, dn = 1 }
+            openGroups()
+            click(learnRow("Orphan Plans"))
+            assert.are.same({ "Hammer Hal", "Rare Wolf" }, teachers())
+            local row = framesWith("teacher")[2]
+            assert.matches("^Drop", row.where._text)
+            assert.matches("level 10%-12", row.name._text)
+            assert.matches("2.50%%", row.name._text)
+            DATA.recipes[9].i, DATA.recipes[9].k, DATA.items[902] = nil, { 2 }, nil
+        end)
+
+        it("says that an item that drops from any creature is a world drop", function()
+            DATA.recipes[9].i = 903
+            DATA.items[903] = { n = "Plans: Orphan Plans", k = { 2 }, lv = 11, cd = 1 }
+            openGroups()
+            click(learnRow("Orphan Plans"))
+            local row = framesWith("teacher")[1]
+            assert.matches("World drop: any creature of about level 11", row.name._text)
+            assert.matches("^Drop", row.where._text)
+            assert.is_false(row.mapButton:IsShown())
+            assert.are.equal(0, #text("No trainer, vendor or drop is known"))
+            DATA.recipes[9].i, DATA.items[903] = nil, nil
         end)
 
         it("each one has the map and waypoint icons, and the map one shows it on the map", function()

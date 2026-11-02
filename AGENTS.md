@@ -139,6 +139,7 @@ and the two Craft buttons, each behind `ns.IsClassic()`):
 - **Craft** opens the profession window by casting its spell, which only secure code may do: `ns.Craft_Secure(button)` puts a transparent
   `SecureActionButtonTemplate` over the button and `ns.Craft_Prepare(button, recipeID, skillLine)` sets its `spell` attribute (out of combat only);
   after the cast, `PostClick` calls `ns.Craft_Open`, which picks the recipe in the window (`ns.Classic_Select`). Mining opens with Smelting.
+  Casting the spell while its window is open closes it, so `PreClick` clears the `type` attribute when that profession's window is already up (out of combat).
   **Not verified in game yet**: whether the cast opens the window from the overlay, and whether `GetTradeSkillRecipeLink` returns `enchant:ID` on both
   clients; `/fab probe` prints what each client answers (skill rows, windows, APIs, recipes saved from the windows).
 - **Data**: `node tools/classic/build_classic.mjs --flavor vanilla|tbc` (tracked: only open sources, nothing secret) builds each

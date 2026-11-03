@@ -394,6 +394,23 @@ function ns.Classic_Select(recipeID)
     return false
 end
 
+-- Is the window of that profession the one open (by the name it gives it, or because it lists the recipe)?
+local function windowOpenFor(skill, recipeID)
+    for _, key in ipairs({ "trade", "craft" }) do
+        local window = WINDOWS[key]
+        local frame = _G[window.frame]
+        if frame and (not frame.IsShown or frame:IsShown()) then
+            local lineName = window.line()
+            if lineName and skillOf(lineName) == skill then return true end
+            for i = 1, window.count() do
+                local name, kind = window.info(i)
+                if name and LEARNED[kind] and window.spell(i) == recipeID then return true end
+            end
+        end
+    end
+    return false
+end
+
 -- Puts a transparent secure button over `button` that casts the profession's spell (which opens its window) and then asks
 -- Craft.lua to pick the recipe. It does nothing until ns.Craft_Prepare tells it what to open. Only on the classic clients.
 function ns.Craft_Secure(button)
@@ -412,6 +429,12 @@ function ns.Craft_Secure(button)
     secure:SetScript("OnLeave", function()
         local onLeave = button:GetScript("OnLeave")
         if onLeave then onLeave(button) end
+    end)
+    -- casting the spell while its window is open closes it: then the click only picks the recipe (out of combat: the attribute is locked in it)
+    secure:SetScript("PreClick", function(self)
+        if InCombatLockdown and InCombatLockdown() then return end
+        local open = self.recipeID and windowOpenFor(self.skillLine, self.recipeID)
+        self:SetAttribute("type", not open and "spell" or nil)
     end)
     secure:SetScript("PostClick", function(self, _, down)
         -- once per click: on the half the game acts on

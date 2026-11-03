@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0
 
 - New: under a recipe in "You can learn", the creatures that drop the pattern or recipe that teaches it (with their level and chance, and the map and waypoint icons) and the containers it is found in, after the trainers and vendors; an item that drops from any creature says so. The "nobody is known" message is only for recipes with no source at all.
 - New: Classic Era and TBC Anniversary. The same addon now loads on those clients (one folder, a TOC per client), with the recipes of each game, including Jewelcrafting in TBC.

@@ -21,12 +21,10 @@ local CHANGELOG_BOTTOM = 56 + SIBLINGS_HEIGHT
 -- Mirrors the latest entry in CHANGELOG.md -- update this alongside it (and the version bump) on every release; shown as-is,
 -- scrollable, in the window below.
 local LATEST_CHANGELOG_TEXT = table.concat({
-    "- Data: the trainers of several professions, as the public databases have them now.",
-    "- Fix: the next rank of a profession (Journeyman...) shows up as soon as the skill is the one a trainer asks for (50 of 75...).",
-    "- Fix: \"You can learn\" no longer lists recipes that are only taught in season (Gingerbread Cookie, Egg Nog...).",
-    "- New: an icon next to \"You can learn\" orders its recipes by proximity, level or name.",
-    "- Fix: the welcome windows of several addons no longer show through each other.",
-    "- Fix: the View Quest button of a recipe is Completao's icon, next to the map and waypoint icons.",
+    "- New: Classic Era and TBC Anniversary support, with the recipes of each game (Jewelcrafting in TBC). Open each " ..
+        "profession's window once so the addon learns what the character knows.",
+    "- New: under a recipe in \"You can learn\", the creatures that drop what teaches it and the containers it is found in.",
+    "- New: on Classic Era and TBC, the tooltip of what a recipe makes also shows what you wear in that slot.",
 }, "\n")
 
 local welcomeFrame

@@ -22,7 +22,7 @@ globals = {
 
 -- the game's API and frames it uses (add here as the addon grows)
 read_globals = {
-    "Auctionator", "C_AddOns", "C_Item", "CompletaoAPI", "EmbolsaoAPI", "EmbolsaoDB", "RAID_CLASS_COLORS", "UnitClass", "UnitName", "C_Map", "C_PetJournal", "C_Spell", "C_SpellBook", "C_Timer", "C_TradeSkillUI", "ChatEdit_InsertLink", "CreateFrame", "Enum",
+    "Auctionator", "C_AddOns", "C_Item", "C_QuestLog", "C_TooltipInfo", "WorldFrame", "RETRIEVING_DATA", "CompletaoAPI", "EmbolsaoAPI", "EmbolsaoDB", "RAID_CLASS_COLORS", "UnitClass", "UnitName", "C_Map", "C_PetJournal", "C_Spell", "C_SpellBook", "C_Timer", "C_TradeSkillUI", "ChatEdit_InsertLink", "CreateFrame", "Enum",
     "GameTooltip", "GameTooltip_Hide", "GetAddOnMetadata", "GetBuildInfo", "GetCoinTextureString", "GetCursorPosition", "GetItemCount", "GetItemInfo", "GetLocale",
     "GetProfessionInfo", "GetProfessions", "GetRealmName", "time", "GetSpellInfo", "GetSpellTexture", "GetNumSkillLines", "GetSkillLineInfo", "IsModifiedClick", "IsPlayerSpell", "Minimap", "ProfessionsFrame", "UIParent", "UISpecialFrames", "UnitFactionGroup",
     "GetNumTradeSkills", "GetTradeSkillInfo", "GetTradeSkillRecipeLink", "GetTradeSkillItemLink", "GetTradeSkillLine", "ExpandTradeSkillSubClass",

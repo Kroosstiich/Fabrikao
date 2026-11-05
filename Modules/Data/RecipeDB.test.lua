@@ -143,6 +143,62 @@ describe("RecipeDB", function()
             assert.are.equal(4, line.more)
         end)
 
+        describe("in the player's language", function()
+            local asked
+            before_each(function()
+                asked = 0
+                -- the game's creature cache: the tooltip of a creature's link gives its name (nothing for one it doesn't have)
+                _G.C_TooltipInfo = { GetHyperlink = function(link)
+                    asked = asked + 1
+                    local id = tonumber(link:match("^unit:Creature%-0%-0%-0%-0%-(%d+)%-"))
+                    local name = ({ [1] = "Draco negro", [3] = "Herrero de la Alianza", [7] = "Alquimista Ana" })[id]
+                    return name and { lines = { { leftText = name } } } or { lines = {} }
+                end }
+                _G.C_QuestLog = { GetTitleForQuestID = function(id) return id == 5 and "La misión de la espada" or nil end,
+                    RequestLoadQuestByID = function() end }
+            end)
+            after_each(function() _G.C_TooltipInfo, _G.C_QuestLog, ns.OBJECT_NAMES, WowMock.locale = nil, nil, nil, nil end)
+
+            it("names NPCs as the game does, the data's name for those it doesn't have yet", function()
+                local trainers = ns.RecipeDB_Where(ns.RecipeDB_Get(100))[1]
+                assert.matches("Alquimista Ana %(Stormwind City%)", trainers.text)
+                assert.matches("Neutral Nick", trainers.text)
+                assert.matches("Herrero de la Alianza %(Stormwind City%)", ns.RecipeDB_Where(ns.RecipeDB_Get(102))[1].text)
+                local drops = ns.RecipeDB_Where(ns.RecipeDB_Get(101))[1]
+                assert.matches("^Draco negro", drops.entries[1].text)
+                assert.are.equal("Draco negro", drops.entries[1].name)
+                assert.matches("Red Whelp", drops.text)
+            end)
+
+            it("asks the game once per NPC it has a name for", function()
+                ns.RecipeDB_Where(ns.RecipeDB_Get(102))
+                local before = asked
+                ns.RecipeDB_Where(ns.RecipeDB_Get(102))
+                assert.are.equal(before, asked)
+            end)
+
+            it("names quests as the game does", function()
+                assert.are.equal("La misión de la espada", ns.RecipeDB_Where(ns.RecipeDB_Get(103))[1].text)
+            end)
+
+            it("names world objects from the data's translations, for the client's language", function()
+                WowMock.locale = "esES"
+                ns.OBJECT_NAMES = { esES = { ["Large Solid Chest"] = "Cofre sólido grande" }, esMX = { ["Old Box"] = "Caja vieja" } }
+                assert.are.equal("Cofre sólido grande", ns.ObjectName("Large Solid Chest"))
+                assert.are.equal("Caja vieja", ns.ObjectName("Old Box")) -- (Mexican Spanish fills Spain's gaps)
+                assert.are.equal("Copper Vein", ns.ObjectName("Copper Vein"))
+                WowMock.locale = "deDE"
+                assert.are.equal("Large Solid Chest", ns.ObjectName("Large Solid Chest"))
+            end)
+
+            it("the search finds by the names in the player's language too", function()
+                ns.RecipeDB_Where(ns.RecipeDB_Get(102)) -- (an NPC's name once the game has given it)
+                assert.are.same({ ns.RecipeDB_Get(102) }, { ns.RecipeDB_Search("herrero")[1].recipe })
+                assert.are.equal(102, ns.RecipeDB_Search("alliance smith")[1].id)
+                assert.are.equal(103, ns.RecipeDB_Search("espada")[1].id)
+            end)
+        end)
+
         it("says so when nothing is known", function()
             ns.RECIPE_DATA.recipes[104] = { s = 171, n = "Mystery", c = { 1, 2, 3, 4 } }
             local lines = ns.RecipeDB_Where(ns.RecipeDB_Get(104))

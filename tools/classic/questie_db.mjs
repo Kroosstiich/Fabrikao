@@ -58,6 +58,7 @@ function cbor(buf) {
     return read();
 }
 const decode = (b64) => cbor(Buffer.from(b64, "base64"));
+export { cbor as cborDecode };
 
 const KINDS = {
     Quest: { prefix: "Quest-", fields: 36 },

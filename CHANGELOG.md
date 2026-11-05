@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Fix: recipe names now show in the game's language (Spanish, German...) everywhere, not only with the profession's window open, and the search finds them by that name as well as by the English one. So do the books and items that teach a recipe. The names of trainers, vendors and creatures are still in English.
+- New: trainers, vendors, creatures and quests are named in the game's language too, as the game knows them (one it hasn't loaded yet shows in English the first time and translated the next), and herbs, veins and chests from translations that come with the addon. The search finds them by those names as well.
+- Fix: recipe names now show in the game's language (Spanish, German...) everywhere, not only with the profession's window open, and the search finds them by that name as well as by the English one. So do the books and items that teach a recipe.
 
 ## 0.5.1
 

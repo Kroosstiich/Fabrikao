@@ -17,4 +17,5 @@
 
 Load_Core.xml
 Data\Generated\Recipes.lua
+Data\Generated\Names.lua
 Load_Modules.xml

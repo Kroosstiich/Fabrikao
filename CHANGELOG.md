@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix: on WoW Forever, opening the bank showed "Fabrikao has been blocked from an action only available to the Blizzard UI". The addon no longer hooks the game's tooltip there.
+
 ## 0.5.0
 
 - New: under a recipe in "You can learn", the creatures that drop the pattern or recipe that teaches it (with their level and chance, and the map and waypoint icons) and the containers it is found in, after the trainers and vendors; an item that drops from any creature says so. The "nobody is known" message is only for recipes with no source at all.

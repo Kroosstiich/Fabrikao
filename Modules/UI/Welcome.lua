@@ -21,6 +21,8 @@ local CHANGELOG_BOTTOM = 56 + SIBLINGS_HEIGHT
 -- Mirrors the latest entry in CHANGELOG.md -- update this alongside it (and the version bump) on every release; shown as-is,
 -- scrollable, in the window below.
 local LATEST_CHANGELOG_TEXT = table.concat({
+    "- Fix: on WoW Forever, opening the bank no longer shows \"Fabrikao has been blocked from an action only available " ..
+        "to the Blizzard UI\".",
     "- New: Classic Era and TBC Anniversary support, with the recipes of each game (Jewelcrafting in TBC). Open each " ..
         "profession's window once so the addon learns what the character knows.",
     "- New: under a recipe in \"You can learn\", the creatures that drop what teaches it and the containers it is found in.",

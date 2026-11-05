@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.1
 
 - Fix: on WoW Forever, opening the bank showed "Fabrikao has been blocked from an action only available to the Blizzard UI". The addon no longer hooks the game's tooltip there.
 

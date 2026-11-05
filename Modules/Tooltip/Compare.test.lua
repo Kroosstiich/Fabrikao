@@ -81,6 +81,22 @@ describe("Compare with what is worn", function()
         assert.is_false(ShoppingTooltip1:IsShown())
     end)
 
+    -- An addon's hook on the game's tooltip taints the Blizzard code that hides it: on Forever it blocked the bank.
+    it("never hooks the game's tooltip on Forever", function()
+        WowMock.Reset()
+        local hooks = 0
+        local original = GameTooltip.HookScript
+        GameTooltip.HookScript = function(...)
+            hooks = hooks + 1
+            return original(...)
+        end
+        ns = LoadAddon({ files = { "Modules/Tooltip/Compare.lua", "Modules/Data/RecipeDB.lua" } })
+        ns.flavor = "forever"
+        ns.Compare_Show(GameTooltip)
+        GameTooltip.HookScript = original
+        assert.are.equal(0, hooks)
+    end)
+
     it("is asked for by the tooltip of what a recipe makes", function()
         setup()
         GameTooltip.SetItemByID = function() end

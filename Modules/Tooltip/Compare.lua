@@ -50,6 +50,23 @@ local function labelEquipped(shopping)
 end
 
 local shown = false
+local hooked = false
+
+-- The comparison goes away with the tooltip. Hooked on the first comparison, not at load: an addon's OnHide hook on the
+-- game's tooltip taints the Blizzard code that hides it, and on Forever (which never compares here) that blocked the bank
+-- ("Fabrikao has been blocked from an action", PurchaseBankTab when the banker's tooltip hid).
+local function hookHide(tooltip)
+    if hooked or not tooltip.HookScript then return end
+    hooked = true
+    pcall(tooltip.HookScript, tooltip, "OnHide", function()
+        if not shown then return end
+        shown = false
+        for _, name in ipairs({ "ShoppingTooltip1", "ShoppingTooltip2" }) do
+            local shopping = _G[name]
+            if shopping and shopping.Hide then shopping:Hide() end
+        end
+    end)
+end
 
 -- Shows what the character wears in the slot (both slots for rings, trinkets and weapons) of the item in `tooltip`, when it is wearable
 -- and not worn. Only on the Classic clients.
@@ -59,20 +76,9 @@ function ns.Compare_Show(tooltip)
     local _, link = tooltip:GetItem()
     if not link or not IsEquippableItem(link) then return end
     if tooltip.IsEquippedItem and tooltip:IsEquippedItem() then return end
+    hookHide(tooltip)
     GameTooltip_ShowCompareItem(tooltip)
     shown = true
     labelEquipped(_G.ShoppingTooltip1)
     labelEquipped(_G.ShoppingTooltip2)
-end
-
--- The comparison goes away with the tooltip.
-if GameTooltip and GameTooltip.HookScript then
-    pcall(GameTooltip.HookScript, GameTooltip, "OnHide", function()
-        if not shown then return end
-        shown = false
-        for _, name in ipairs({ "ShoppingTooltip1", "ShoppingTooltip2" }) do
-            local shopping = _G[name]
-            if shopping and shopping.Hide then shopping:Hide() end
-        end
-    end)
 end

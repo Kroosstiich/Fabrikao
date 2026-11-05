@@ -129,7 +129,7 @@ function ns.RecipeDetail_Build(recipe, opts)
     if db and db.g and db.g > 0 then fact(L["Training cost:"], ns.FormatMoney(db.g)) end
     local teacher = db and ns.RecipeDB_Item(db)
     if db and db.i then
-        local text = teacher and teacher.n or itemName(db.i)
+        local text = ns.ItemName(db.i) or (teacher and teacher.n) or itemName(db.i)
         if teacher and teacher.lv then text = text .. " " .. DIM .. "(" .. L["item level %d"]:format(teacher.lv) .. ")|r" end
         fact(L["Taught by:"], text)
     end

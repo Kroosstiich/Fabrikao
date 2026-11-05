@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix: recipe names now show in the game's language (Spanish, German...) everywhere, not only with the profession's window open, and the search finds them by that name as well as by the English one. So do the books and items that teach a recipe. The names of trainers, vendors and creatures are still in English.
+
 ## 0.5.1
 
 - Fix: on WoW Forever, opening the bank showed "Fabrikao has been blocked from an action only available to the Blizzard UI". The addon no longer hooks the game's tooltip there.

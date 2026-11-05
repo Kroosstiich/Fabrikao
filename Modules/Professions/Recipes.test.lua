@@ -166,6 +166,18 @@ describe("Recipes", function()
             assert.are.same({ "Elixir of Giants", "Flask of the Titans" }, names(copy.unknown))
         end)
 
+        it("names the recipes as the player's game does (their spell's name), the data's name where it doesn't know them", function()
+            _G.C_Spell = { GetSpellName = function(id) return ({ [3] = "Elixir de gigantes", [5] = "Espada de hierro" })[id] end }
+            local copy = ns.Recipes_FromData(171, 0)
+            local iron = ns.Recipes_FromData(164, 0).unknown[1]
+            _G.C_Spell = nil
+            local list = names(copy.unknown)
+            table.sort(list)
+            assert.are.same({ "Elixir de gigantes", "Elixir of Wisdom", "Flask of the Titans", "Healing Potion" }, list)
+            assert.are.equal("Espada de hierro", iron.name)
+            assert.matches("espada de hierro", iron.search or ns.RecipeDB_SearchText(5))
+        end)
+
         it("doesn't mix professions", function()
             local copy = ns.Recipes_FromData(164, 0)
             assert.are.equal(0, #copy.known)

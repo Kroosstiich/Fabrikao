@@ -150,6 +150,12 @@ function ns.RecipeDB_Get(spellID)
     return db and db.recipes[spellID]
 end
 
+-- The name of a recipe as the player's game calls it: the name of its spell (the id it is keyed by), in the client's
+-- language; the data's (English) name when the client doesn't know the spell.
+function ns.RecipeDB_Name(spellID, recipe)
+    return ns.SpellName(spellID) or (recipe and recipe.n) or ""
+end
+
 function ns.RecipeDB_Each()
     local db = data()
     return pairs(db and db.recipes or {})
@@ -290,7 +296,7 @@ function ns.RecipeDB_RankSources(skillLine, cap)
             local price = money(vendor.g)
             entries[#entries + 1] = {
                 id = vendor.id, name = vendor.n, kind = "vendor", distance = distances[vendor],
-                text = named(vendor, true) .. (price and (" -- " .. price) or "") .. " <" .. book.n .. ">",
+                text = named(vendor, true) .. (price and (" -- " .. price) or "") .. " <" .. (book.i and ns.ItemName(book.i) or book.n) .. ">",
             }
         end
     end
@@ -579,8 +585,10 @@ end
 
 -- Everything a search can match in a recipe, in lower case: its name, ingredients (the ones the client knows by now),
 -- and who sells, drops or gives the item that teaches it, with their zones.
-local function haystackOf(recipe)
+local function haystackOf(id, recipe)
     local parts = { recipe.n }
+    local localized = ns.RecipeDB_Name(id, recipe)
+    if localized ~= recipe.n then parts[#parts + 1] = localized end
     local itemName = C_Item and C_Item.GetItemNameByID
     for _, reagent in ipairs(recipe.m or {}) do
         local name = itemName and itemName(reagent[1])
@@ -601,7 +609,7 @@ end
 -- the same for a recipe by its spell id (for the lists of the profession pages), "" when it isn't known
 function ns.RecipeDB_SearchText(spellID)
     local recipe = ns.RecipeDB_Get(spellID)
-    return recipe and haystackOf(recipe) or ""
+    return recipe and haystackOf(spellID, recipe) or ""
 end
 
 local function usesItem(recipe, itemID)
@@ -628,12 +636,12 @@ function ns.RecipeDB_Search(text, opts)
 
     for id, recipe in pairs(db.recipes) do
         if (not skill or recipe.s == skill) and (not ingredient or usesItem(recipe, ingredient)) then
-            local haystack = text ~= "" and haystackOf(recipe) or ""
+            local haystack = text ~= "" and haystackOf(id, recipe) or ""
             local all = true
             for _, word in ipairs(words) do
                 if not haystack:find(word, 1, true) then all = false break end
             end
-            if all then results[#results + 1] = { id = id, recipe = recipe } end
+            if all then results[#results + 1] = { id = id, recipe = recipe, name = ns.RecipeDB_Name(id, recipe) } end
         end
     end
     local browsing = text == ""
@@ -642,7 +650,7 @@ function ns.RecipeDB_Search(text, opts)
             local ra, rb = ns.RecipeDB_Required(a.recipe), ns.RecipeDB_Required(b.recipe)
             if ra ~= rb then return ra < rb end
         end
-        if a.recipe.n ~= b.recipe.n then return a.recipe.n < b.recipe.n end
+        if a.name ~= b.name then return a.name < b.name end
         return a.id < b.id
     end)
     return results

@@ -36,6 +36,25 @@ describe("RecipeDB", function()
         ns.RECIPE_DATA = DATA
     end)
 
+    describe("a recipe's name", function()
+        after_each(function() _G.C_Spell, _G.GetSpellInfo = nil, nil end)
+
+        it("is its spell's, in the player's language", function()
+            _G.C_Spell = { GetSpellName = function(id) return id == 102 and "Espada de hierro" or nil end }
+            assert.are.equal("Espada de hierro", ns.RecipeDB_Name(102, ns.RecipeDB_Get(102)))
+        end)
+
+        it("on the clients with only the older query, asks that one", function()
+            _G.GetSpellInfo = function(id) return id == 102 and "Eisenschwert" or nil end
+            assert.are.equal("Eisenschwert", ns.RecipeDB_Name(102, ns.RecipeDB_Get(102)))
+        end)
+
+        it("is the data's when the client doesn't know the spell", function()
+            _G.C_Spell = { GetSpellName = function() return nil end }
+            assert.are.equal("Iron Sword", ns.RecipeDB_Name(102, ns.RecipeDB_Get(102)))
+        end)
+    end)
+
     it("gets a recipe by its spell id", function()
         assert.are.equal("Iron Sword", ns.RecipeDB_Get(102).n)
         assert.is_nil(ns.RecipeDB_Get(1))
@@ -193,6 +212,20 @@ describe("RecipeDB", function()
             assert.are.same({ "Mighty Flask" }, names(ns.RecipeDB_Search("", { ingredient = 12 })))
             assert.are.same({}, names(ns.RecipeDB_Search("", { ingredient = 999 })))
             assert.are.same({}, names(ns.RecipeDB_Search("flask", { ingredient = 10 })))
+        end)
+
+        describe("in the player's language", function()
+            before_each(function()
+                _G.C_Spell = { GetSpellName = function(id) return ({ [102] = "Espada de hierro", [103] = "Espada de misiones" })[id] end }
+            end)
+            after_each(function() _G.C_Spell = nil end)
+
+            it("finds by the game's name and by the data's, sorted by the game's", function()
+                assert.are.same({ "Iron Sword", "Sword of Quests" }, names(ns.RecipeDB_Search("espada")))
+                assert.are.same({ "Iron Sword" }, names(ns.RecipeDB_Search("hierro")))
+                assert.are.same({ "Iron Sword" }, names(ns.RecipeDB_Search("iron sword")))
+                assert.are.equal("Espada de hierro", ns.RecipeDB_Search("hierro")[1].name)
+            end)
         end)
 
         it("an empty search finds nothing", function()

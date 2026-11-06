@@ -647,7 +647,9 @@ describe("Ranks of a book or a quest", function()
             assert.are.equal("Shandrina", list[1].name)
             assert.are.equal("vendor", list[1].kind)
             assert.matches("Stormwind City", list[1].text)
-            assert.matches("<Expert Cookbook>", list[1].text)
+            assert.matches("<Item16072>", list[1].text) -- the book as the game names it
+            C_Item.GetItemNameByID = function() return nil end -- (not loaded yet: the data's name)
+            assert.matches("<Expert Cookbook>", ns.RecipeDB_RankSources(185, 225)[1].text)
         end)
 
         it("has the quest by its name, with the id, and its giver apart (the name, the place and the distance are the giver's)", function()

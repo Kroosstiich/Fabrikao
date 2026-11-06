@@ -105,7 +105,10 @@ describe("Recipe detail", function()
             assert.is_not_nil(factValue(detail, "Training cost:"))
             assert.is_not_nil(factValue(detail, "New in Forever"))
             detail = build(2, false)
-            assert.matches("Recipe: Flask of the Titans.-item level 50", factValue(detail, "Taught by:")) -- the name from the data
+            assert.matches("Item900.-item level 50", factValue(detail, "Taught by:")) -- the game's name, in the player's language
+            C_Item.GetItemNameByID = function() return nil end -- (not loaded yet)
+            detail = build(2, false)
+            assert.matches("Recipe: Flask of the Titans.-item level 50", factValue(detail, "Taught by:")) -- the data's meanwhile
         end)
 
         it("lists the ingredients with how many the character has, and the price of what they need", function()

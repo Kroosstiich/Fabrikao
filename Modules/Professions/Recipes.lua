@@ -271,7 +271,7 @@ end
 -- A recipe of the data as the window's lists use it.
 local function fromData(id, db, learned, rank, withSearch)
     local recipe = {
-        id = id, name = db.n, icon = ns.RecipeDB_Icon(id, db), learned = learned, db = db, rank = rank,
+        id = id, name = ns.RecipeDB_Name(id, db), icon = ns.RecipeDB_Icon(id, db), learned = learned, db = db, rank = rank,
         required = ns.RecipeDB_Required(db), colors = ns.RecipeDB_Colors(db), trivial = db.c and db.c[4],
         sourceType = ns.RecipeDB_Sources(db)[1], category = ns.RecipeDB_Category(db),
     }
@@ -352,7 +352,10 @@ end
 -- Returns { { profession =, recipes = { recipe... }, total = n }, ... } in the professions' order, only the ones that have something;
 -- `limit` cuts each group's recipes (`total` is how many there were). `sortBy` is how each group is ordered: "near" (the default: the
 -- nearest trainer or vendor first), "level" (the lowest required skill first) or "name" (alphabetical); the others break the ties.
-local function nameKey(entry) return (entry.db.n or ""):lower() end
+local function nameKey(entry)
+    entry.nameKey = entry.nameKey or ns.RecipeDB_Name(entry.id, entry.db):lower()
+    return entry.nameKey
+end
 local LEARN_ORDERS = {
     near = function(a, b)
         if a.key ~= b.key then return a.key < b.key end

@@ -17,4 +17,5 @@
 
 Load_Core.xml
 Data\TBC\Generated\Recipes.lua
+Data\TBC\Generated\Names.lua
 Load_Modules.xml

@@ -319,7 +319,8 @@ function ns.Classic_Learned(text)
         local mine = {}
         for _, line in ipairs(ns.Classic_SkillLines()) do mine[line.skillLine] = true end
         for id, recipe in ns.RecipeDB_Each() do
-            if (mine[recipe.s] or recipe.s == 40) and ((item and recipe.p and recipe.p[1] == item) or recipe.n == name) then
+            if (mine[recipe.s] or recipe.s == 40) and ((item and recipe.p and recipe.p[1] == item) or recipe.n == name
+                or ns.RecipeDB_Name(id, recipe) == name) then
                 spell = id
                 break
             end

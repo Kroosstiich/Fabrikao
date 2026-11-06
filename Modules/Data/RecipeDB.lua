@@ -150,6 +150,12 @@ function ns.RecipeDB_Get(spellID)
     return db and db.recipes[spellID]
 end
 
+-- The name of a recipe as the player's game calls it: the name of its spell (the id it is keyed by), in the client's
+-- language; the data's (English) name when the client doesn't know the spell.
+function ns.RecipeDB_Name(spellID, recipe)
+    return ns.SpellName(spellID) or (recipe and recipe.n) or ""
+end
+
 function ns.RecipeDB_Each()
     local db = data()
     return pairs(db and db.recipes or {})
@@ -201,10 +207,18 @@ function ns.RecipeDB_ShortSource(recipe)
     return #names > 0 and table.concat(names, " / ") or nil
 end
 
-local function named(entry, withZones)
+-- The name of an entry of the data in the player's language: an NPC's by default, `kind` "quest" or "object" for those.
+local function nameOf(entry, kind)
+    if kind == "quest" then return ns.QuestName(entry.id, entry.n) end
+    if kind == "object" then return ns.ObjectName(entry.n) end
+    return ns.NpcName(entry.id, entry.n)
+end
+
+local function named(entry, withZones, kind)
+    local name = nameOf(entry, kind)
     local zones = withZones and zoneList(entry.z)
-    if zones and zones ~= "" then return ("%s (%s)"):format(entry.n, zones) end
-    return entry.n
+    if zones and zones ~= "" then return ("%s (%s)"):format(name, zones) end
+    return name
 end
 
 -- Where an NPC of the data stands: { map = map id, x =, y = } (x and y in percent of the map), or nil when it is not known.
@@ -261,11 +275,11 @@ end
 -- A quest as an entry of a line: its name (the text) and its id, and, when the data knows who gives it, its nearest giver: `id`, `name`
 -- and `distance` are the giver's, for the map and waypoint buttons, and `giver` is "name (zones)".
 local function questEntry(quest)
-    local entry = { text = quest.n, questID = quest.id }
+    local entry = { text = nameOf(quest, "quest"), questID = quest.id }
     if quest.g and #quest.g > 0 then
         local ordered, distances = nearestFirst(quest.g)
         local giver = ordered[1]
-        entry.id, entry.name, entry.giver, entry.distance = giver.id, giver.n, named(giver, true), distances[giver]
+        entry.id, entry.name, entry.giver, entry.distance = giver.id, nameOf(giver), named(giver, true), distances[giver]
     end
     return entry
 end
@@ -289,8 +303,8 @@ function ns.RecipeDB_RankSources(skillLine, cap)
         for _, vendor in ipairs(ordered) do
             local price = money(vendor.g)
             entries[#entries + 1] = {
-                id = vendor.id, name = vendor.n, kind = "vendor", distance = distances[vendor],
-                text = named(vendor, true) .. (price and (" -- " .. price) or "") .. " <" .. book.n .. ">",
+                id = vendor.id, name = nameOf(vendor), kind = "vendor", distance = distances[vendor],
+                text = named(vendor, true) .. (price and (" -- " .. price) or "") .. " <" .. (book.i and ns.ItemName(book.i) or book.n) .. ">",
             }
         end
     end
@@ -397,7 +411,7 @@ function ns.RecipeDB_ReagentWhere(itemID)
         for _, vendor in ipairs(ordered) do
             local price = money(vendor.g)
             entries[#entries + 1] = {
-                id = vendor.id, name = vendor.n, text = named(vendor, true) .. (price and (" -- " .. price) or ""),
+                id = vendor.id, name = nameOf(vendor), text = named(vendor, true) .. (price and (" -- " .. price) or ""),
                 distance = distances[vendor],
             }
         end
@@ -418,7 +432,7 @@ function ns.RecipeDB_ReagentWhere(itemID)
             if chance then extra[#extra + 1] = chance end
             local text = named(creature, true)
             if #extra > 0 then text = text .. " -- " .. table.concat(extra, ", ") end
-            entries[#entries + 1] = { id = creature.id, name = creature.n, text = text, distance = distances[creature] }
+            entries[#entries + 1] = { id = creature.id, name = nameOf(creature), text = text, distance = distances[creature] }
         end
         lines[#lines + 1] = { title = title, entries = entries }
     end
@@ -441,7 +455,7 @@ function ns.RecipeDB_ReagentWhere(itemID)
         local entries = {}
         for _, node in ipairs(rec.g) do
             local zones = zoneList(node.z)
-            entries[#entries + 1] = { text = zones ~= "" and ("%s (%s)"):format(node.n, zones) or node.n }
+            entries[#entries + 1] = { text = zones ~= "" and ("%s (%s)"):format(ns.ObjectName(node.n), zones) or ns.ObjectName(node.n) }
         end
         lines[#lines + 1] = { title = L["Gathered from"], entries = entries }
     end
@@ -449,7 +463,8 @@ function ns.RecipeDB_ReagentWhere(itemID)
     if rec.c and #rec.c > 0 then
         local entries = {}
         for _, made in ipairs(rec.c) do
-            entries[#entries + 1] = { text = made.s and ("%s: %s"):format(ns.RecipeDB_SkillName(made.s), made.n) or made.n }
+            local name = ns.RecipeDB_Name(made.i, made)
+            entries[#entries + 1] = { text = made.s and ("%s: %s"):format(ns.RecipeDB_SkillName(made.s), name) or name }
         end
         lines[#lines + 1] = { title = L["Made by"], entries = entries }
     end
@@ -470,7 +485,7 @@ function ns.RecipeDB_Trainers(skillLine, limit)
     for i, trainer in ipairs(ordered) do
         if limit and i > limit then break end
         list[#list + 1] = {
-            id = trainer.id, name = trainer.n, title = trainer.t, zones = zoneList(trainer.z), text = named(trainer, true),
+            id = trainer.id, name = nameOf(trainer), title = trainer.t, zones = zoneList(trainer.z), text = named(trainer, true),
             distance = distances[trainer],
         }
     end
@@ -496,7 +511,7 @@ function ns.RecipeDB_Where(recipe, full)
             count = count + 1
             if count <= maxTrainers then
                 names[#names + 1] = named(trainer, true)
-                npcs[#npcs + 1] = { id = trainer.id, name = trainer.n, text = named(trainer, true), distance = distances[trainer] }
+                npcs[#npcs + 1] = { id = trainer.id, name = nameOf(trainer), text = named(trainer, true), distance = distances[trainer] }
             end
         end
         local text = table.concat(names, "; ")
@@ -519,7 +534,7 @@ function ns.RecipeDB_Where(recipe, full)
                 local price = money(vendor.g)
                 local text = named(vendor, true) .. (price and (" -- " .. price) or "")
                 vendors[#vendors + 1] = text
-                npcs[#npcs + 1] = { id = vendor.id, name = vendor.n, text = text, distance = distances[vendor] }
+                npcs[#npcs + 1] = { id = vendor.id, name = nameOf(vendor), text = text, distance = distances[vendor] }
             end
         end
         if #vendors > 0 then
@@ -532,7 +547,7 @@ function ns.RecipeDB_Where(recipe, full)
             local quests, questEntries = {}, {}
             for _, quest in ipairs(item.qs) do
                 if forMySide(quest) and #quests < maxQuests then
-                    quests[#quests + 1] = quest.n
+                    quests[#quests + 1] = nameOf(quest, "quest")
                     questEntries[#questEntries + 1] = questEntry(quest)
                 end
             end
@@ -551,7 +566,7 @@ function ns.RecipeDB_Where(recipe, full)
                         or (" " .. L["level %d"]:format(npc.lo))) end
                     if npc.pm and npc.pm > 0 then text = text .. (" -- %.2f%%"):format(npc.pm / 100) end
                     drops[#drops + 1] = text
-                    dropEntries[#dropEntries + 1] = { text = text, id = npc.id, name = npc.n, distance = dropDistances[npc] }
+                    dropEntries[#dropEntries + 1] = { text = text, id = npc.id, name = nameOf(npc), distance = dropDistances[npc] }
                 end
             end
             local text = table.concat(drops, "; ")
@@ -565,7 +580,7 @@ function ns.RecipeDB_Where(recipe, full)
         if item.o then
             local objects = {}
             for _, object in ipairs(item.o) do
-                if #objects < maxObjects then objects[#objects + 1] = named(object, true) end
+                if #objects < maxObjects then objects[#objects + 1] = named(object, true, "object") end
             end
             lines[#lines + 1] = { title = L["Found in"], text = table.concat(objects, "; "), entries = asEntries(objects) }
         end
@@ -579,8 +594,10 @@ end
 
 -- Everything a search can match in a recipe, in lower case: its name, ingredients (the ones the client knows by now),
 -- and who sells, drops or gives the item that teaches it, with their zones.
-local function haystackOf(recipe)
+local function haystackOf(id, recipe)
     local parts = { recipe.n }
+    local localized = ns.RecipeDB_Name(id, recipe)
+    if localized ~= recipe.n then parts[#parts + 1] = localized end
     local itemName = C_Item and C_Item.GetItemNameByID
     for _, reagent in ipairs(recipe.m or {}) do
         local name = itemName and itemName(reagent[1])
@@ -588,9 +605,14 @@ local function haystackOf(recipe)
     end
     local item = ns.RecipeDB_Item(recipe)
     if item then
-        for _, list in ipairs({ item.v or {}, item.d or {}, item.qs or {}, item.o or {} }) do
-            for _, entry in ipairs(list) do
+        -- (the names in the player's language too: an NPC's only once the game has given it, asking for thousands is too slow)
+        local lists = { { item.v, "npc" }, { item.d, "npc" }, { item.qs, "quest" }, { item.o, "object" } }
+        for _, list in ipairs(lists) do
+            for _, entry in ipairs(list[1] or {}) do
                 parts[#parts + 1] = entry.n
+                local shown
+                if list[2] == "npc" then shown = ns.NpcName(entry.id, entry.n, true) else shown = nameOf(entry, list[2]) end
+                if shown and shown ~= entry.n then parts[#parts + 1] = shown end
                 if entry.z then parts[#parts + 1] = zoneList(entry.z) end
             end
         end
@@ -601,7 +623,7 @@ end
 -- the same for a recipe by its spell id (for the lists of the profession pages), "" when it isn't known
 function ns.RecipeDB_SearchText(spellID)
     local recipe = ns.RecipeDB_Get(spellID)
-    return recipe and haystackOf(recipe) or ""
+    return recipe and haystackOf(spellID, recipe) or ""
 end
 
 local function usesItem(recipe, itemID)
@@ -628,12 +650,12 @@ function ns.RecipeDB_Search(text, opts)
 
     for id, recipe in pairs(db.recipes) do
         if (not skill or recipe.s == skill) and (not ingredient or usesItem(recipe, ingredient)) then
-            local haystack = text ~= "" and haystackOf(recipe) or ""
+            local haystack = text ~= "" and haystackOf(id, recipe) or ""
             local all = true
             for _, word in ipairs(words) do
                 if not haystack:find(word, 1, true) then all = false break end
             end
-            if all then results[#results + 1] = { id = id, recipe = recipe } end
+            if all then results[#results + 1] = { id = id, recipe = recipe, name = ns.RecipeDB_Name(id, recipe) } end
         end
     end
     local browsing = text == ""
@@ -642,7 +664,7 @@ function ns.RecipeDB_Search(text, opts)
             local ra, rb = ns.RecipeDB_Required(a.recipe), ns.RecipeDB_Required(b.recipe)
             if ra ~= rb then return ra < rb end
         end
-        if a.recipe.n ~= b.recipe.n then return a.recipe.n < b.recipe.n end
+        if a.name ~= b.name then return a.name < b.name end
         return a.id < b.id
     end)
     return results

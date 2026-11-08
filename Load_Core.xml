@@ -4,5 +4,6 @@
     <Script file="Modules\Core\Flavor.lua"/>
     <Script file="Modules\Core\Compat.lua"/>
     <Script file="Localization\Locale.lua"/>
+    <Script file="Localization\Locale.fr.lua"/>
     <Script file="Modules\Settings\Settings.lua"/>
 </Ui>

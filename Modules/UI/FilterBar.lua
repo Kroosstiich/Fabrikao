@@ -86,6 +86,10 @@ local function createPicker(parent, config)
         end)
         return { frame = dropdown, Update = function()
             if dropdown.SetDefaultText then dropdown:SetDefaultText(config.text()) end
+            -- An open menu is rebuilt in place, and rebuilt from here it is tainted: with the gamepad UI on, the game then blocks
+            -- the addon when that menu closes and hands the controls back. The game updates an open dropdown itself after a pick
+            -- and builds the menu again every time it opens, so an open one is left alone.
+            if dropdown.IsMenuOpen and dropdown:IsMenuOpen() then return end
             dropdown:GenerateMenu()
         end }
     end

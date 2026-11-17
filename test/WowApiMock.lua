@@ -188,29 +188,41 @@ end
 -- The game's dropdown (WowStyle1DropdownTemplate, a DropdownButton with menus), when WowMock.menuDropdowns is on: SetupMenu runs
 -- the generator on a root that records its entries in dropdown.menu = { { kind = "radio" | "checkbox" | "divider" | "title", text =,
 -- selected =, choose = function() }... }; dropdown.shownText is what the button says (the translator's text for the selected
--- radio, else the default text).
+-- radio, else the default text). OpenMenu / CloseMenu / IsMenuOpen: while the menu is open, a choice updates the button as the game
+-- does after a pick (the selections and the text again, from the same entries); dropdown.generated counts the GenerateMenu calls.
 local function addDropdownMethods(f)
     function f:SetSelectionTranslator(translator) self._translator = translator end
     function f:SetDefaultText(text) self._defaultText = text end
     function f:SetupMenu(generator) self._generator = generator; self:GenerateMenu() end
+    function f:SignalUpdate()
+        self.shownText = self._defaultText
+        for _, entry in ipairs(self.menu) do
+            if entry.isSelected then entry.selected = entry.isSelected(entry.data) end
+            if entry.kind == "radio" and entry.selected and self._translator then self.shownText = self._translator(entry) end
+        end
+    end
     function f:GenerateMenu()
+        self.generated = (self.generated or 0) + 1
         local menu = {}
         local root = {}
-        function root.CreateRadio(_, text, isSelected, setSelected, data)
-            menu[#menu + 1] = { kind = "radio", text = text, selected = isSelected(data), choose = function() setSelected(data) end }
+        local function add(kind, text, isSelected, setSelected, data)
+            menu[#menu + 1] = { kind = kind, text = text, data = data, isSelected = isSelected, selected = isSelected(data),
+                choose = function()
+                    setSelected(data)
+                    if self._menuOpen then self:SignalUpdate() end
+                end }
         end
-        function root.CreateCheckbox(_, text, isSelected, setSelected, data)
-            menu[#menu + 1] = { kind = "checkbox", text = text, selected = isSelected(data), choose = function() setSelected(data) end }
-        end
+        function root.CreateRadio(_, ...) add("radio", ...) end
+        function root.CreateCheckbox(_, ...) add("checkbox", ...) end
         function root.CreateDivider() menu[#menu + 1] = { kind = "divider" } end
         function root.CreateTitle(_, text) menu[#menu + 1] = { kind = "title", text = text } end
         self._generator(self, root)
         self.menu = menu
-        self.shownText = self._defaultText
-        for _, entry in ipairs(menu) do
-            if entry.kind == "radio" and entry.selected and self._translator then self.shownText = self._translator(entry) end
-        end
+        self:SignalUpdate()
     end
+    function f:IsMenuOpen() return self._menuOpen == true end
+    function f:OpenMenu() self:GenerateMenu(); self._menuOpen = true end
+    function f:CloseMenu() self._menuOpen = false; self:SignalUpdate() end
 end
 
 function WowMock.NewFrame(kind, name, parent, template)

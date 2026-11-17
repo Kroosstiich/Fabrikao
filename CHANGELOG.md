@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix: on WoW Forever with the gamepad UI, picking a sort order (or another filter) in the recipe lists' dropdowns showed "Fabrikao has been blocked from an action only available to the Blizzard UI". The addon no longer rebuilds a dropdown's menu while it is open.
+
 ## 0.6.0
 
 - New: trainers, vendors, creatures and quests are named in the game's language too, as the game knows them (one it hasn't loaded yet shows in English the first time and translated the next), and herbs, veins and chests from translations that come with the addon. The search finds them by those names as well.

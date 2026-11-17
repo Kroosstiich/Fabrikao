@@ -180,6 +180,27 @@ describe("Filter dropdowns", function()
             assert.is_true(entry(sort, "Descending").selected)
         end)
 
+        -- An open menu built again from the addon's code is built tainted, and with the gamepad UI on the game then blocks the
+        -- addon when the menu closes: the game updates an open dropdown itself after a pick, so the addon leaves it alone.
+        it("a choice in an open menu does not build that menu again", function()
+            local sort, skill = dropdowns()[5], dropdowns()[4]
+            sort:OpenMenu()
+            local generated, others = sort.generated, skill.generated
+            entry(sort, "Name").choose()
+            assert.are.equal(generated, sort.generated)
+            assert.are.equal("Sort: Name ^", sort.shownText)
+            assert.is_true(entry(sort, "Name").selected)
+            entry(sort, "Descending").choose()
+            assert.are.equal(generated, sort.generated)
+            assert.are.equal("Sort: Name v", sort.shownText)
+            assert.is_true(entry(sort, "Descending").selected)
+            assert.is_true(skill.generated > others) -- (the closed ones still show the change)
+            sort:CloseMenu()
+            entry(sort, "Level").choose()
+            assert.is_true(sort.generated > generated)
+            assert.are.equal("Sort: Level ^", sort.shownText)
+        end)
+
         it("Clear shows everything again in all of them", function()
             entry(dropdowns()[2], "Bags").choose()
             entry(dropdowns()[1], "Vendor").choose()

@@ -18,13 +18,24 @@ describe("Locale", function()
         end
     end)
 
-    it("every string the code uses has a Spanish translation", function()
-        -- keys of the Spanish table (a translation can equal the English one)
+    it("on frFR uses French, and only there", function()
+        local files = { "Localization/Locale.lua", "Localization/Locale.fr.lua" }
+        WowMock.locale = "frFR"
+        local ns = LoadAddon({ files = files })
+        assert.are.equal("initialisation...", ns.L["initializing..."])
+        assert.are.equal("Untranslated text", ns.L["Untranslated text"])
+        WowMock.locale = "esES"
+        ns = LoadAddon({ files = files })
+        assert.are.equal("inicializando...", ns.L["initializing..."])
+    end)
+
+    -- Keys of a translation file (a translation can equal the English one) that the code uses but it lacks.
+    local function untranslated(localeFile)
         local translated = {}
-        for key in io.open("Localization/Locale.lua"):read("*a"):gmatch('%["(.-)"%]%s*=') do translated[key] = true end
+        for key in io.open(localeFile):read("*a"):gmatch('%["(.-)"%]%s*=') do translated[key] = true end
         local missing, seen = {}, {}
         for _, file in ipairs(TocFiles()) do
-            if file ~= "Localization/Locale.lua" then
+            if not file:match("^Localization/") then
                 local text = io.open(file):read("*a")
                 for key in text:gmatch('L%["(.-)"%]') do
                     if not translated[key] and not seen[key] then
@@ -34,6 +45,14 @@ describe("Locale", function()
                 end
             end
         end
-        assert.are.same({}, missing, "untranslated")
+        return missing
+    end
+
+    it("every string the code uses has a Spanish translation", function()
+        assert.are.same({}, untranslated("Localization/Locale.lua"), "untranslated")
+    end)
+
+    it("every string the code uses has a French translation", function()
+        assert.are.same({}, untranslated("Localization/Locale.fr.lua"), "untranslated")
     end)
 end)

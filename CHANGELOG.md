@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- New: French translation, for the French game client (thanks to Kroosstiich).
 - Fix: on WoW Forever with the gamepad UI, picking a sort order (or another filter) in the recipe lists' dropdowns showed "Fabrikao has been blocked from an action only available to the Blizzard UI". The addon no longer rebuilds a dropdown's menu while it is open.
 
 ## 0.6.0
